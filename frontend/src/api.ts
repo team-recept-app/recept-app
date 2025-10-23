@@ -21,3 +21,17 @@ export async function fetchRecipes(q?: string): Promise<ListResponse> {
   return res.json();
 }
 
+export async function login(email: string, password: string): Promise<string> {
+  const res = await fetch(`${API}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.msg || `Login failed (${res.status})`);
+  }
+  const data = await res.json();
+  return data.access_token as string;
+}
+
