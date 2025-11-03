@@ -35,3 +35,18 @@ export async function login(email: string, password: string): Promise<string> {
   return data.access_token as string;
 }
 
+export async function register(email: string, name: string, password: string): Promise<{ id:number; email:string; name:string }> {
+  const r = await fetch(`${API}/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, name, password })
+  });
+  const data = await r.json();
+  if (!r.ok) {
+    // 409: email már létezik, 400: hiányzó mező, stb.
+    throw new Error(data?.msg || "Sikertelen regisztráció");
+  }
+  // backend: { msg, user: { id, email, name } }
+  return data.user as { id:number; email:string; name:string };
+}
+

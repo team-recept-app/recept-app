@@ -168,3 +168,58 @@
   .glass-card { padding: 18px; }
   .card-title { font-size: 24px; }
 }
+
+.btn-link {
+  margin-top: 6px;
+  background: transparent;
+  border: none;
+  color: #ffd58a;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  justify-self: center;
+}
+.btn-link:hover { opacity: 0.9; }
+
+.info {
+  color: #9ce27b;
+  margin-top: 6px;
+  font-size: 14px;
+  text-align: center;
+}
+/* --- REG KÁRTYA: belső görgetés, ha magas --- */
+.glass-card {
+  max-height: 85vh;       /* ne nőjön a képernyő 85%-a fölé */
+  overflow-y: auto;       /* ha hosszú, görgessen belül */
+  -webkit-overflow-scrolling: touch; /* mobilon sima görgetés */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.25) transparent;
+}
+
+/* szebb scroll sáv Chromium/WebKit alatt */
+.glass-card::-webkit-scrollbar {
+  width: 6px;
+}
+.glass-card::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,0.3);
+  border-radius: 3px;
+}
+
+/* biztosítsd, hogy a grid elemek ne nyúljanak szét */
+.form-grid {
+  grid-auto-rows: min-content;
+}
+
+/* alacsony képernyőn a kártya „feljebb csúszik”, hogy látszódjon a teteje is */
+@media (max-height: 720px) {
+  .center-screen {
+    align-items: start;    /* ne pont középen legyen, hanem felülről induljon */
+    padding-top: 24px;
+  }
+  .glass-card {
+    max-height: calc(100vh - 48px); /* a fenti paddinget figyelembe veszi */
+  }
+}

@@ -43,6 +43,25 @@ def init_db():
     """)
 
     cur.execute("""
+    CREATE TABLE IF NOT EXISTS allergens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT
+    );
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS recipe_allergens (
+        recipe_id INTEGER NOT NULL,
+        allergen_id INTEGER NOT NULL,
+        PRIMARY KEY (recipe_id, allergen_id),
+        FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE,
+        FOREIGN KEY (allergen_id) REFERENCES allergens (id) ON DELETE CASCADE
+    );
+    """)
+
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS ratings (
         user_id INTEGER NOT NULL,
         recipe_id INTEGER NOT NULL,

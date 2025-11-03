@@ -3,7 +3,7 @@ from flask_cors import CORS
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity
 from db import init_db, query_one, query_all, execute, get_average_rating, now_iso
 from models import from_json_list, to_json_list
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import timedelta
 
 app = Flask(__name__)
@@ -36,6 +36,52 @@ def login():
     else:
         return jsonify({"msg": "Helytelen email vagy jelszó"}), 401
 
+@app.route("/register", methods=["POST"])
+def register():
+    """
+    Create a new user account.
+    Expected JSON:
+      {
+        "email": "user@example.com",
+        "name": "Anna",
+        "password": "secret123"
+      }
+    """
+    data = request.get_json() or {}
+    email = data.get("email")
+    name = data.get("name")
+    password = data.get("password")
+
+    if not email or not name or not password:
+        return jsonify({"msg": "Hiányzó mezők (email, name, password)."}), 400
+
+    # 🔹 Check if user already exists
+    existing = query_one("SELECT id FROM users WHERE email = ?", (email,))
+    if existing:
+        return jsonify({"msg": "Ez az email cím már regisztrálva van."}), 409
+
+    password_hash = generate_password_hash(password)
+
+    try:
+        execute(
+            "INSERT INTO users (email, name, password_hash, created_at) VALUES (?, ?, ?, ?)",
+            (email, name, password_hash, now_iso()),
+        )
+    except Exception as e:
+        return jsonify({"msg": f"Hiba a regisztráció során: {e}"}), 500
+
+    new_user = query_one("SELECT id, email, name FROM users WHERE email = ?", (email,))
+    if not new_user:
+        return jsonify({"msg": "Hiba: az új felhasználó nem található a beszúrás után."}), 500
+
+    return jsonify({
+        "msg": "Sikeres regisztráció.",
+        "user": {
+            "id": new_user["id"],
+            "email": new_user["email"],
+            "name": new_user["name"]
+        }
+    }), 201
 
 @app.route("/recipes", methods=["GET"])
 def list_recipes():
