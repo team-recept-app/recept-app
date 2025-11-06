@@ -66,11 +66,13 @@ export async function login(email: string, password: string): Promise<string> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
+
+  const data = await res.json().catch(() => ({})); // csak egyszer olvassuk be a body-t
+
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.msg || `Login failed (${res.status})`);
+    throw new Error(data?.msg || `Login failed (${res.status})`);
   }
-  const data = await res.json();
+
   return data.access_token as string;
 }
 

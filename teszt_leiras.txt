@@ -1,0 +1,104 @@
+Recept App — Tesztösszefoglaló
+==============================
+
+Projekt felépítése:
+- Backend: Python + Flask + Pytest
+- Frontend: React + TypeScript + Vitest + Testing Library
+
+
+──────────────────────────────
+BACKEND TESZTEK
+──────────────────────────────
+
+tests/test_db.py
+----------------
+Modul: db.py  
+Cél: Adatbázis-függvények validálása (mock SQLite adatbázissal).
+
+- setup_in_memory_db() fixture:
+  • Létrehoz egy ideiglenes SQLite adatbázist memóriában.  
+  • Feltölti a ratings táblát tesztadatokkal.  
+  • Monkeypatch segítségével a db.get_conn() ezt az adatbázist használja.
+
+- test_get_average_rating():
+  • Teszteli, hogy a get_average_rating(1) helyesen számolja ki az átlagot.  
+  • Elvárt eredmény: 4.0 (mert (5 + 3) / 2 = 4.0).
+
+
+tests/test_app.py
+-----------------
+Modul: app.py  
+Cél: Flask endpoint működésének ellenőrzése.
+
+- client() fixture: Flask test_client előkészítése.
+- test_health_endpoint():
+  • Lekéri a /health végpontot.  
+  • Ellenőrzi:
+    - Státuszkód = 200  
+    - JSON válasz = {"ok": True}
+
+
+tests/test_models.py
+--------------------
+Modul: models.py  
+Cél: JSON konverziós segédfüggvények helyes működésének ellenőrzése.
+
+- test_to_json_list_basic():
+  • Teszteli, hogy ["alma", "körte"] → JSON string helyesen tartalmazza a szavakat.  
+  • Ellenőrzi az UTF-8 karakterek megjelenését (ö, ő).
+
+- test_from_json_list_handles_invalid_json():
+  • Hibás JSON bemenet esetén ("nem-json") üres listát ad vissza.
+
+
+──────────────────────────────
+FRONTEND TESZTEK
+──────────────────────────────
+
+src/__tests__/api.test.ts
+-------------------------
+Modul: api.ts  
+Cél: API függvények viselkedésének mockolt ellenőrzése.
+
+- test api.login success:
+  • Mockolja a fetch választ.  
+  • Teszteli, hogy login() sikeres hívás esetén visszaadja a token stringet.
+
+- test api.login failure:
+  • Mockolja a sikertelen választ.  
+  • Ellenőrzi, hogy a függvény Error-t dob „Hibás jelszó” üzenettel.
+
+
+src/__tests__/App.test.tsx
+--------------------------
+Modul: App.tsx  
+Cél: Bejelentkezési logika és hibaüzenetek működése.
+
+- bejelentkezés után elmenti a tokent és betölti a HomePage-t:
+  • Mockolja az api.login választ (mock123 token).  
+  • Ellenőrzi, hogy localStorage menti a tokent és a HomePage megjelenik.
+
+- hibát ír ki, ha az API hibát dob:
+  • Mockolja az api.login hibát (Error("Sikertelen bejelentkezés")).  
+  • Ellenőrzi, hogy a hibaüzenet megjelenik a felületen.
+
+
+src/__tests__/App.e2e.test.tsx
+------------------------------
+Modul: Teljes app (E2E stílusú teszt)  
+Cél: Felhasználói útvonalak és mockolt API együttműködése.
+
+- regisztráció → info üzenet → login módba vált:
+  • Mockolja az api.register hívást.  
+  • Ellenőrzi, hogy a regisztráció után a felhasználó információs üzenetet kap, majd visszakerül a login képernyőre.
+
+- login flow átmenet a főoldalra:
+  • Teszteli a teljes flow-t login → token mentés → főoldal render.
+
+
+──────────────────────────────
+ÖSSZEFOGLALÁS
+──────────────────────────────
+Backend: 3 fájl, 4 teszt sikeresen lefutott  
+Frontend: 3 fájl, 6 teszt sikeresen lefutott  
+ Összesen: 10 teszt mind PASS
