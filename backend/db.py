@@ -34,7 +34,6 @@ def init_db():
         ingredients TEXT,
         steps TEXT,
         category TEXT,
-        allergens TEXT,
         image_url TEXT,
         author_id INTEGER NOT NULL,
         created_at TEXT NOT NULL,

@@ -4,7 +4,7 @@
   inset: 0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   color: #111;
-  overflow: hidden;
+  overflow: auto;
 }
 
 
@@ -190,16 +190,14 @@
   font-size: 14px;
   text-align: center;
 }
-/* --- REG KÁRTYA: belső görgetés, ha magas --- */
 .glass-card {
-  max-height: 85vh;       /* ne nőjön a képernyő 85%-a fölé */
-  overflow-y: auto;       /* ha hosszú, görgessen belül */
-  -webkit-overflow-scrolling: touch; /* mobilon sima görgetés */
+  max-height: 85vh;       
+  overflow-y: auto;       
+  -webkit-overflow-scrolling: touch; 
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.25) transparent;
 }
 
-/* szebb scroll sáv Chromium/WebKit alatt */
 .glass-card::-webkit-scrollbar {
   width: 6px;
 }
@@ -208,18 +206,8 @@
   border-radius: 3px;
 }
 
-/* biztosítsd, hogy a grid elemek ne nyúljanak szét */
 .form-grid {
   grid-auto-rows: min-content;
 }
 
-/* alacsony képernyőn a kártya „feljebb csúszik”, hogy látszódjon a teteje is */
-@media (max-height: 720px) {
-  .center-screen {
-    align-items: start;    /* ne pont középen legyen, hanem felülről induljon */
-    padding-top: 24px;
-  }
-  .glass-card {
-    max-height: calc(100vh - 48px); /* a fenti paddinget figyelembe veszi */
-  }
-}
+

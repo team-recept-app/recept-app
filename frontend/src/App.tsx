@@ -2,6 +2,7 @@ import { useState, memo } from "react";
 import { login, register } from "./api";
 import Orb from "../components/Orb";
 import "../styles/app.css";
+import HomePage from "./HomePage";
 
 const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -175,16 +176,8 @@ export default function App() {
   }
 
   return (
-    <Shell>
-      <div className="authed-wrap">
-        <div className="authed-bar">
-          <h2 className="authed-title">Be vagy jelentkezve ✅</h2>
-          <button onClick={logout} className="btn-outline">Kijelentkezés</button>
-        </div>
-        <p className="authed-text">
-          Most már tudsz auth-olt kéréseket küldeni a backendnek (Bearer token).
-        </p>
-      </div>
-    </Shell>
-  );
+  <Shell>
+    <HomePage onLogout={logout} />
+  </Shell>
+);
 }

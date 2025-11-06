@@ -86,36 +86,80 @@ def register():
 @app.route("/recipes", methods=["GET"])
 def list_recipes():
     search = request.args.get("q")
+    include_allergens = request.args.get("allergens")  # e.g. "GL,MI"
+    exclude_allergens = request.args.get("exclude")    # e.g. "EG,PN"
+
+    params = []
+    where_clauses = []
+
+    # --- Base search filter ---
     if search:
         wildcard = f"%{search}%"
-        recipes_rows = query_all(
-            """
-            SELECT * FROM recipes
-            WHERE title LIKE ?
-            OR ingredients LIKE ?
-            OR steps LIKE ?
-            OR allergens LIKE ?
-            OR summary LIKE ?
-            ORDER BY id DESC
-            """,
-        (wildcard, wildcard, wildcard, wildcard, wildcard)
-    )
-    else:
-        recipes_rows = query_all("SELECT * FROM recipes ORDER BY id DESC")
+        where_clauses.append("(r.title LIKE ? OR r.ingredients LIKE ? OR r.steps LIKE ? OR r.summary LIKE ?)")
+        params.extend([wildcard, wildcard, wildcard, wildcard])
 
-    recipes_list = []
+    # --- Base SELECT with joins ---
+    base_query = """
+        SELECT r.*, a.code AS allergen_code, a.name AS allergen_name, a.description AS allergen_description
+        FROM recipes r
+        LEFT JOIN recipe_allergens ra ON r.id = ra.recipe_id
+        LEFT JOIN allergens a ON ra.allergen_id = a.id
+    """
+
+    # --- Inclusion filter (recipes containing certain allergens) ---
+    if include_allergens:
+        codes = [code.strip() for code in include_allergens.split(",") if code.strip()]
+        placeholders = ",".join("?" for _ in codes)
+        where_clauses.append(f"r.id IN ("
+                             f"SELECT ra.recipe_id FROM recipe_allergens ra "
+                             f"JOIN allergens a ON ra.allergen_id = a.id "
+                             f"WHERE a.code IN ({placeholders})"
+                             f")")
+        params.extend(codes)
+
+    # --- Exclusion filter (recipes without certain allergens) ---
+    if exclude_allergens:
+        codes = [code.strip() for code in exclude_allergens.split(",") if code.strip()]
+        placeholders = ",".join("?" for _ in codes)
+        where_clauses.append(f"r.id NOT IN ("
+                             f"SELECT ra.recipe_id FROM recipe_allergens ra "
+                             f"JOIN allergens a ON ra.allergen_id = a.id "
+                             f"WHERE a.code IN ({placeholders})"
+                             f")")
+        params.extend(codes)
+
+    # --- Combine WHERE clause if needed ---
+    if where_clauses:
+        base_query += " WHERE " + " AND ".join(where_clauses)
+
+    base_query += " ORDER BY r.id DESC"
+
+    recipes_rows = query_all(base_query, tuple(params))
+
+    # --- Group joined results by recipe_id ---
+    recipes_dict = {}
     for row in recipes_rows:
-        recipe = dict(row)
+        rid = row["id"]
+        if rid not in recipes_dict:
+            recipe = {key: row[key] for key in row.keys() if not key.startswith("allergen_")}
+            recipe["ingredients"] = from_json_list(recipe["ingredients"])
+            recipe["steps"] = from_json_list(recipe["steps"])
+            recipe["allergens"] = []
+            recipe["average_rating"] = get_average_rating(rid)
+            recipes_dict[rid] = recipe
 
-        recipe["ingredients"] = from_json_list(recipe["ingredients"])
-        recipe["steps"] = from_json_list(recipe["steps"])
-        recipe["allergens"] = from_json_list(recipe["allergens"])
+        # Append allergen info if present
+        if row["allergen_code"]:
+            recipes_dict[rid]["allergens"].append({
+                "code": row["allergen_code"],
+                "name": row["allergen_name"],
+                "description": row["allergen_description"],
+            }
+            )
 
-        recipe["average_rating"] = get_average_rating(recipe["id"])
+    return jsonify({"recipes": list(recipes_dict.values())})
 
-        recipes_list.append(recipe)
 
-    return jsonify({"recipes": recipes_list})
 
 @app.route("/recipes", methods=["POST"])
 @jwt_required()
@@ -171,6 +215,22 @@ def rate_recipe(recipe_id):
         "recipe_id": recipe_id,
         "new_average_rating": new_avg
     }), 200
+
+
+@app.route("/allergens", methods=["GET"])
+def list_allergens():
+    """
+    Return the list of all allergens.
+    Each allergen includes code, name, and description.
+    """
+    rows = query_all("SELECT id, code, name, description FROM allergens ORDER BY name ASC")
+    allergens = [dict(row) for row in rows]
+
+    if not allergens:
+        return jsonify({"msg": "Nincsenek elérhető allergének."}), 404
+
+    return jsonify({"allergens": allergens}), 200
+
 
 
 if __name__ == "__main__":
