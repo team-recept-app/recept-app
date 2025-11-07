@@ -1,97 +1,183 @@
-import { useEffect, useState } from "react";
-import { fetchRecipes, type Recipe } from "./api";
+import { useState, memo } from "react";
+import { login, register } from "./api";
+import Orb from "../components/Orb";
+import "../styles/app.css";
+import HomePage from "./HomePage";
+
+const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="app-root">
+      <div className="bg-layer">
+        <div className="bg-base" />
+        <div className="orb-center">
+          <Orb hue={35} hoverIntensity={0.11} rotateOnHover forceHoverState />
+        </div>
+      </div>
+      <div className="content-layer">{children}</div>
+    </div>
+  );
+});
 
 export default function App() {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [q, setQ] = useState("");
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
 
-  async function load(query?: string) {
+  const switchToLogin = () => {
+    setMode("login");
+    clearFields();
+  };
+
+  const switchToRegister = () => {
+    setMode("register");
+    clearFields();
+  };
+
+  function clearFields() {
+  setEmail("");
+  setPw("");
+  setPw2("");
+  setName("");
+  setError(null);
+  setInfo(null);
+}
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setInfo(null);
+
+    if (mode === "register") {
+      if (!name.trim() || !email.trim() || !pw.trim() || !pw2.trim()) {
+        return setError("Minden mezőt ki kell tölteni.");
+      }
+      if (pw !== pw2) {
+        return setError("A két jelszó nem egyezik.");
+      }
+
+      try {
+        const user = await register(email.trim(), name.trim(), pw);
+        setInfo(`Sikeres regisztráció: ${user.name}. Most jelentkezz be!`);
+        setMode("login");
+        setEmail("");
+        setPw("");
+        setPw2("");
+        setName("");
+
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Sikertelen regisztráció");
+      }
+      return;
+    }
+
     try {
-      setLoading(true);
-      setErr(null);
-      const data = await fetchRecipes(query);
-      setRecipes(data.recipes);
-    } catch (e: any) {
-      setErr(e?.message ?? "Hiba történt");
-    } finally {
-      setLoading(false);
+      const t = await login(email.trim(), pw);
+      localStorage.setItem("token", t);
+      setToken(t);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Sikertelen bejelentkezés");
     }
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  function logout() {
+  localStorage.removeItem("token");
+  setToken(null);
+  clearFields();
+  setMode("login");
+}
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    load(q);
+  if (!token) {
+    return (
+      <Shell>
+        <div className="center-screen">
+          <div className="glass-card">
+            <h2 className="card-title">
+              {mode === "login" ? "Bejelentkezés" : "Regisztráció"}
+            </h2>
+
+            <form onSubmit={onSubmit} className="form-grid">
+              {mode === "register" && (
+                <>
+                  <label className="label">Felhasználónév</label>
+                  <input
+                    className="input"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Anna"
+                  />
+                </>
+              )}
+
+              <label className="label">Email</label>
+              <input
+                className="input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="user1@example.com"
+              />
+
+              <label className="label">Jelszó</label>
+              <input
+                className="input"
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                type="password"
+                placeholder="password1"
+              />
+
+              {mode === "register" && (
+                <>
+                  <label className="label">Jelszó újra</label>
+                  <input
+                    className="input"
+                    value={pw2}
+                    onChange={(e) => setPw2(e.target.value)}
+                    type="password"
+                    placeholder="ismételd meg a jelszót"
+                  />
+                </>
+              )}
+
+              <button type="submit" className="btn-primary">
+                {mode === "login" ? "Belépés" : "Regisztráció"}
+              </button>
+
+              {mode === "login" ? (
+                <button
+                  type="button"
+                  className="btn-link"
+                  onClick={switchToRegister}
+                >
+                  Nincs fiókod? Regisztrálj
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-link"
+                  onClick={switchToLogin}
+                >
+                  Mégse, vissza a belépéshez
+                </button>
+              )}
+
+              {error && <div className="error">{error}</div>}
+              {info && <div className="info">{info}</div>}
+              {mode === "login" && <div className="hint">user1@example.com / password1</div>}
+            </form>
+          </div>
+        </div>
+      </Shell>
+    );
   }
 
   return (
-    <div style={{ fontFamily: "system-ui, Arial", padding: 16, maxWidth: 900, margin: "0 auto" }}>
-      <h1>Recept kereső (minimal)</h1>
-
-      <form onSubmit={onSubmit} style={{ marginBottom: 16 }}>
-        <label style={{ fontSize: 14 }}>Mit szeretnél ma enni?</label>
-        <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="pl. csirke, leves, tészta..."
-            style={{
-              flex: 1,
-              padding: 8,
-              border: "1px solid #ccc",
-              borderRadius: 6,
-              fontSize: 14,
-            }}
-          />
-          <button
-            type="submit"
-            style={{
-              padding: "8px 16px",
-              borderRadius: 6,
-              border: "1px solid #333",
-              background: "#111",
-              color: "white",
-              cursor: "pointer",
-            }}
-          >
-            Keresés
-          </button>
-        </div>
-      </form>
-
-      {loading && <p>Betöltés…</p>}
-      {err && <p style={{ color: "crimson" }}>{err}</p>}
-
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {recipes.map((r) => (
-          <li
-            key={r.id}
-            style={{
-              border: "1px solid #eee",
-              borderRadius: 8,
-              padding: 12,
-              marginBottom: 10,
-            }}
-          >
-            <div style={{ fontSize: 12, opacity: 0.7 }}>{r.category || "Kategória nélkül"}</div>
-            <div style={{ fontSize: 18, fontWeight: 600 }}>{r.title}</div>
-            {r.summary && <div style={{ marginTop: 6 }}>{r.summary}</div>}
-            {r.ingredients?.length ? (
-              <div style={{ marginTop: 8, fontSize: 14 }}>
-                <b>Hozzávalók:</b> {r.ingredients.join(", ")}
-              </div>
-            ) : null}
-            {r.average_rating != null && <div style={{ marginTop: 6 }}>⭐ {r.average_rating}</div>}
-          </li>
-        ))}
-      </ul>
-
-      {!loading && !recipes.length && <p>Nincs találat.</p>}
-    </div>
-  );
+  <Shell>
+    <HomePage onLogout={logout} />
+  </Shell>
+);
 }
