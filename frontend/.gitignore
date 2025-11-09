@@ -7,7 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Csomagok (ez a legfontosabb)
 node_modules
+
+# Build kimenet
 dist
 dist-ssr
 *.local
@@ -22,7 +25,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-.venv/
-__pycache__/
-db.sqlite
