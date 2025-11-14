@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchRecipes, fetchAllergens, type Recipe, type Allergen } from "./api";
 import "../styles/homepageStyles.css";
+import ElectricBorder from "../components/ElectricBorder";
+
+
 
 export default function HomePage({ onLogout }: { onLogout: () => void }) {
   const [query, setQuery] = useState("");
@@ -69,8 +72,18 @@ export default function HomePage({ onLogout }: { onLogout: () => void }) {
     [recipes]
   );
 
+
+
   return (
     <div className="home-root">
+      <ElectricBorder
+      color="#9c851bff"
+      speed={0.3}
+      chaos={0.2}
+      thickness={2}
+      className="electric-border-bottom"
+      style={{ borderRadius: 0 }}
+    >
       <header className="sticky-header">
         <div className="brand">Főtt&Lefedve</div>
         <div className="menu">
@@ -88,72 +101,93 @@ export default function HomePage({ onLogout }: { onLogout: () => void }) {
           )}
         </div>
       </header>
+    </ElectricBorder>
 
       <main className="page-content">
-        <h2 className="home-title">Mit szeretnél ma enni?</h2>
+  <h2 className="home-title">Mit szeretnél ma enni?</h2>
 
-        <div className="search-wrap">
-          <input
-            className="search-input"
-            placeholder="Keresés receptek között..."
-            value={query}
-            onChange={onQueryChange}
-          />
-        </div>
+  <div className="search-panel">
+    <div className="search-row">
+      <input
+        className="search-input"
+        placeholder="Keresés receptek között..."
+        value={query}
+        onChange={onQueryChange}
+      />
 
-        <div className="filter-stack">
-          <div className="filter-bar">
-            <select
-              className="filter-select"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              <option value="">Összes kategória</option>
-              {categories.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
+      <select
+        className="filter-select"
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+      >
+        <option value="">Összes kategória</option>
+        {categories.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
+    </div>
+  </div>
 
-          <div className="allergen-box">
-            <div className="allergen-title">Allergének kizárása</div>
-            <div className="allergen-list">
-              {allergens.length === 0 ? (
-                <div className="allergen-empty">Nincs allergén adat</div>
-              ) : (
-                allergens.map(a => (
-                  <label key={a.code} className="allergen-item">
-                    <input
-                      type="checkbox"
-                      checked={excludedCodes.includes(a.code)}
-                      onChange={() => toggleAllergen(a.code)}
-                    />
-                    <span>{a.name}</span>
-                  </label>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+  <div className="allergen-box">
+    <div className="allergen-title">Allergének kizárása</div>
+    <div className="allergen-list">
+      {allergens.length === 0 ? (
+        <div className="allergen-empty">Nincs allergén adat</div>
+      ) : (
+        allergens.map((a) => (
+          <label
+            key={a.code}
+            className={
+              "allergen-item" +
+              (excludedCodes.includes(a.code) ? " allergen-item--active" : "")
+            }
+          >
+            <input
+              type="checkbox"
+              className="allergen-checkbox"
+              checked={excludedCodes.includes(a.code)}
+              onChange={() => toggleAllergen(a.code)}
+            />
+            <span>{a.name}</span>
+          </label>
+        ))
+      )}
+    </div>
+  </div>
 
-        {loading ? (
-          <p className="loading-text">Betöltés...</p>
-        ) : (
-          <div className="recipe-grid">
-            {view.map(r => (
-              <div key={r.id} className="recipe-card">
-                {r.image_url && <img src={r.image_url} alt={r.title} className="recipe-img" />}
-                <div className="recipe-info">
-                  <h3 className="recipe-title">{r.title}</h3>
-                  <p className="recipe-summary">{r.summary}</p>
-                  {r.average_rating != null && <div className="recipe-rating">⭐ {r.average_rating}</div>}
-                </div>
-              </div>
-            ))}
-            {view.length === 0 && <p className="no-results">Nincs találat.</p>}
-          </div>
+  <div className="recipe-section">
+  {loading && (
+    <div className="loading-overlay">
+      <p className="loading-text">Betöltés...</p>
+    </div>
+  )}
+
+  <div className="recipe-grid">
+    {view.map((r) => (
+      <div key={r.id} className="recipe-card">
+        {r.image_url && (
+          <img src={r.image_url} alt={r.title} className="recipe-img" />
         )}
-      </main>
+        <div className="recipe-info">
+          <h3 className="recipe-title">{r.title}</h3>
+          <p className="recipe-summary">{r.summary}</p>
+          {r.average_rating != null && (
+            <div className="recipe-rating">⭐ {r.average_rating}</div>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  {!loading && view.length === 0 && (
+    <p className="no-results">Nincs találat.</p>
+  )}
+</div>
+
+</main>
+
     </div>
   );
 }
