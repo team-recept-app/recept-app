@@ -5,7 +5,13 @@ import ElectricBorder from "../components/ElectricBorder";
 
 
 
-export default function HomePage({ onLogout }: { onLogout: () => void }) {
+export default function HomePage({
+  onLogout,
+  onOpenRecipe,
+}: {
+  onLogout: () => void;
+  onOpenRecipe: (recipe: Recipe) => void;
+}) {
   const [query, setQuery] = useState("");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [view, setView] = useState<Recipe[]>([]);
@@ -166,7 +172,11 @@ export default function HomePage({ onLogout }: { onLogout: () => void }) {
 
   <div className="recipe-grid">
     {view.map((r) => (
-      <div key={r.id} className="recipe-card">
+      <div
+        key={r.id}
+        className="recipe-card"
+        onClick={() => onOpenRecipe(r)}
+      >
         {r.image_url && (
           <img src={r.image_url} alt={r.title} className="recipe-img" />
         )}
@@ -185,6 +195,7 @@ export default function HomePage({ onLogout }: { onLogout: () => void }) {
     <p className="no-results">Nincs találat.</p>
   )}
 </div>
+
 
 </main>
 
