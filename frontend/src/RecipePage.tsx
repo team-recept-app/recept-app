@@ -1,4 +1,6 @@
+import { useState } from "react";
 import "../styles/recipePageStyles.css";
+import "../styles/homepageStyles.css";
 import type { Recipe } from "./api";
 
 type RecipeAllergen = string | {
@@ -7,7 +9,6 @@ type RecipeAllergen = string | {
   description?: string;
 };
 
-
 type Props = {
   recipe: Recipe;
   onBack: () => void;
@@ -15,14 +16,15 @@ type Props = {
 };
 
 export default function RecipePage({ recipe, onBack, onLogout }: Props) {
-  const allergenLabels = Array.isArray(recipe.allergens)
-  ? (recipe.allergens as RecipeAllergen[])
-      .map((a) =>
-        typeof a === "string" ? a : a.name ?? a.code ?? ""
-      )
-      .filter((label) => label && label.trim().length > 0)
-  : [];
+  const [menuOpen, setMenuOpen] = useState(false);
 
+  const allergenLabels = Array.isArray(recipe.allergens)
+    ? (recipe.allergens as RecipeAllergen[])
+        .map((a) =>
+          typeof a === "string" ? a : a.name ?? a.code ?? ""
+        )
+        .filter((label) => label && label.trim().length > 0)
+    : [];
 
   return (
     <div className="recipe-page-root">
@@ -30,10 +32,54 @@ export default function RecipePage({ recipe, onBack, onLogout }: Props) {
         <button className="rp-btn rp-btn-back" onClick={onBack}>
           ← Vissza
         </button>
+
         <div className="recipe-page-brand">Főtt&Lefedve</div>
-        <button className="rp-btn rp-btn-logout" onClick={onLogout}>
-          Kijelentkezés
-        </button>
+
+        <div className="menu">
+          <button
+            className="burger"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+          {menuOpen && (
+            <div
+              className="dropdown"
+              onMouseLeave={() => setMenuOpen(false)}
+            >
+              <button
+                className="dd-item"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onBack();
+                }}
+              >
+                Kezdőlap
+              </button>
+              <button
+                className="dd-item"
+                onClick={() => {
+                  setMenuOpen(false);
+                  alert("Profilom később");
+                }}
+              >
+                Profilom
+              </button>
+              <button
+                className="dd-item danger"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onLogout();
+                }}
+              >
+                Kijelentkezés
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
       <main className="recipe-page-main">
@@ -76,7 +122,10 @@ export default function RecipePage({ recipe, onBack, onLogout }: Props) {
                 <div className="recipe-allergen-title">Allergének</div>
                 <div className="recipe-allergen-chips">
                   {allergenLabels.map((label, idx) => (
-                    <span key={idx} className="recipe-chip recipe-chip-allergen">
+                    <span
+                      key={idx}
+                      className="recipe-chip recipe-chip-allergen"
+                    >
                       {label}
                     </span>
                   ))}
