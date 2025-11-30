@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "../styles/recipePageStyles.css";
 import "../styles/homepageStyles.css";
 import type { Recipe } from "./api";
@@ -17,6 +17,15 @@ type Props = {
 
 export default function RecipePage({ recipe, onBack, onLogout }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
+   useEffect(() => {
+    const root = document.querySelector(".app-root");
+    if (root instanceof HTMLElement) {
+      root.scrollTop = 0;
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  }, []);
+
 
   const allergenLabels = Array.isArray(recipe.allergens)
     ? (recipe.allergens as RecipeAllergen[])
