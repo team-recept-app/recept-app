@@ -1,8 +1,9 @@
 import { useState, memo } from "react";
-import { login, register } from "./api";
+import { login, register, type Recipe } from "./api";
 import Orb from "../components/Orb";
 import "../styles/app.css";
 import HomePage from "./HomePage";
+import RecipePage from "./RecipePage";
 
 const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -27,6 +28,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
   const switchToLogin = () => {
     setMode("login");
@@ -39,13 +41,13 @@ export default function App() {
   };
 
   function clearFields() {
-  setEmail("");
-  setPw("");
-  setPw2("");
-  setName("");
-  setError(null);
-  setInfo(null);
-}
+    setEmail("");
+    setPw("");
+    setPw2("");
+    setName("");
+    setError(null);
+    setInfo(null);
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -54,10 +56,12 @@ export default function App() {
 
     if (mode === "register") {
       if (!name.trim() || !email.trim() || !pw.trim() || !pw2.trim()) {
-        return setError("Minden mezőt ki kell tölteni.");
+        setError("Minden mezőt ki kell tölteni.");
+        return;
       }
       if (pw !== pw2) {
-        return setError("A két jelszó nem egyezik.");
+        setError("A két jelszó nem egyezik.");
+        return;
       }
 
       try {
@@ -68,7 +72,6 @@ export default function App() {
         setPw("");
         setPw2("");
         setName("");
-
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Sikertelen regisztráció");
       }
@@ -85,11 +88,20 @@ export default function App() {
   }
 
   function logout() {
-  localStorage.removeItem("token");
-  setToken(null);
-  clearFields();
-  setMode("login");
-}
+    localStorage.removeItem("token");
+    setToken(null);
+    setSelectedRecipe(null);
+    clearFields();
+    setMode("login");
+  }
+
+  function openRecipe(recipe: Recipe) {
+    setSelectedRecipe(recipe);
+  }
+
+  function backToHome() {
+    setSelectedRecipe(null);
+  }
 
   if (!token) {
     return (
@@ -176,8 +188,12 @@ export default function App() {
   }
 
   return (
-  <Shell>
-    <HomePage onLogout={logout} />
-  </Shell>
-);
+    <Shell>
+      {selectedRecipe ? (
+        <RecipePage recipe={selectedRecipe} onBack={backToHome} onLogout={logout} />
+      ) : (
+        <HomePage onLogout={logout} onOpenRecipe={openRecipe} />
+      )}
+    </Shell>
+  );
 }

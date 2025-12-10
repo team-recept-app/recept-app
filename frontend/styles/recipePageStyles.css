@@ -1,0 +1,184 @@
+.recipe-page-root {
+  min-height: 100vh;
+  background: #1c1c1f;
+  color: #ffffff;
+}
+
+.recipe-page-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  padding: 10px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: #18181c;
+}
+
+.recipe-page-brand {
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: 0.95rem;
+}
+
+.rp-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.rp-btn-back {
+  justify-self: start;
+}
+
+.rp-btn-logout {
+  justify-self: end;
+}
+
+.recipe-page-main {
+  max-width: 960px;
+  margin: 24px auto 40px;
+  padding: 0 24px 24px;
+}
+
+.recipe-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.7fr);
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.recipe-hero-left {
+  width: 100%;
+}
+
+.recipe-hero-img {
+  width: 100%;
+  border-radius: 24px;
+  object-fit: cover;
+  aspect-ratio: 4 / 3;
+  background: #333333;
+}
+
+.recipe-hero-placeholder {
+  width: 100%;
+  border-radius: 24px;
+  background: #2a2a31;
+  padding: 32px 24px;
+  text-align: center;
+  opacity: 0.8;
+  font-size: 0.95rem;
+}
+
+.recipe-hero-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recipe-title-large {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.recipe-summary-large {
+  margin: 0;
+  font-size: 0.98rem;
+  opacity: 0.85;
+}
+
+.recipe-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.recipe-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.recipe-chip-category {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.recipe-chip-rating {
+  background: rgba(255, 215, 0, 0.12);
+  color: #ffd700;
+}
+
+.recipe-allergen-row {
+  margin-top: 10px;
+}
+
+.recipe-allergen-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.recipe-allergen-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.recipe-chip-allergen {
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.8rem;
+}
+
+.recipe-section-block {
+  margin-top: 24px;
+}
+
+.recipe-section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.recipe-list {
+  list-style: disc;
+  padding-left: 1.3rem;
+  margin: 0;
+}
+
+.recipe-list li {
+  margin-bottom: 4px;
+  font-size: 0.95rem;
+}
+
+.recipe-steps {
+  list-style: decimal;
+  padding-left: 1.4rem;
+  margin: 0;
+}
+
+.recipe-steps li {
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .recipe-page-main {
+    padding: 0 16px 24px;
+  }
+
+  .recipe-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .recipe-title-large {
+    font-size: 1.6rem;
+  }
+}

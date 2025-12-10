@@ -145,6 +145,7 @@ def list_recipes():
             recipe["ingredients"] = from_json_list(recipe["ingredients"])
             recipe["steps"] = from_json_list(recipe["steps"])
             recipe["allergens"] = []
+            recipe["image_url"] = f"http://localhost:8000/static/images/{recipe["image_url"]}"
             recipe["average_rating"] = get_average_rating(rid)
             recipes_dict[rid] = recipe
 

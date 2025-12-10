@@ -1,3 +1,6 @@
+.home-root {
+  font-family: "Poppins", sans-serif;
+}
 
 html, body, #root {
   height: 100%;
@@ -17,16 +20,17 @@ html, body, #root {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  padding: 12px 20px;
-  background: #1c1c1f;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 10px 20px;
+  background: #18181c;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
 .brand {
   font-weight: 700;
-  letter-spacing: 0.5px;
-  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  font-size: 1rem;        
 }
+
 
 .menu {
   position: relative;
@@ -84,21 +88,55 @@ html, body, #root {
 .dd-item.danger:hover { background: rgba(255,80,80,0.18); }
 
 .page-content {
-  padding: 24px 24px 40px;
+  padding: 32px 24px 40px;
+  max-width: 1030px;
+  margin: 0 auto;         
 }
 
+
 .home-title {
-  font-size: 1.8rem;
+  font-size: 2.3rem;
   font-weight: 700;
   text-align: center;
-  margin: 0.2rem 0 1rem;
+  margin: 2.5rem 0 1.2rem;  
+  letter-spacing: 0.03em;
 }
+.home-subtitle {
+  text-align: center;
+  font-size: 0.95rem;
+  opacity: 0.75;
+  margin-bottom: 1.6rem;
+}
+
+
 
 .search-wrap {
   display: flex;
   justify-content: center;
   margin-bottom: 0.8rem;
 }
+
+.search-panel {
+  background: #26262b;
+  border-radius: 24px;
+  padding: 18px 20px 20px;
+  margin-bottom: 1.4rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.search-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .search-row {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
 
 .search-input {
   width: min(720px, 82vw);
@@ -134,16 +172,30 @@ html, body, #root {
 
 .allergen-box {
   margin: 0 auto;
-  width: min(980px, 92vw);
-  background: rgba(255,255,255,0.08);
-  border-radius: 14px;
-  padding: 0.8rem 1rem;
+  width: 100%;
+  max-width: 980px;
+  background: #26262b;
+  border-radius: 24px;                     
+  padding: 1.2rem 1.4rem 1.1rem;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4); 
 }
 
-.allergen-title {
-  font-weight: 600;
-  margin-bottom: 0.4rem;
+.allergen-item:hover {
+  background: rgba(255,255,255,0.18);
 }
+.allergen-item--active:hover {
+  box-shadow: 0 0 0 3px rgba(125, 249, 255, 0.9);
+}
+
+
+.allergen-title {
+  font-weight: 700;
+  font-size: 1.2rem;
+  text-align: center;        
+  margin-bottom: 0.8rem;     
+  letter-spacing: 0.4px;
+}
+
 
 .allergen-list {
   display: flex;
@@ -152,13 +204,48 @@ html, body, #root {
 }
 
 .allergen-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  background: rgba(255,255,255,0.08);
-  padding: 0.4rem 0.6rem;
-  border-radius: 10px;
+  gap: 0.55rem;
+  background: rgba(255,255,255,0.10);
+  padding: 0.55rem 0.9rem;   
+  border-radius: 14px;       
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+  font-size: 1rem;           
+  user-select: none;
 }
+.allergen-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: rgba(255,255,255,0.10);
+  padding: 0.55rem 0.9rem;   
+  border-radius: 14px;       
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+  font-size: 1rem;           
+  user-select: none;
+}
+
+
+.allergen-checkbox {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.allergen-item span {
+  font-size: 0.9rem;
+}
+
+.allergen-item--active {
+  background: rgba(122, 103, 4, 0.22);
+  box-shadow: 0 0 0 2px rgba(122, 103, 6, 0.7);
+  transform: translateY(-2px);
+}
+
+
 
 .allergen-empty {
   opacity: 0.8;
@@ -199,13 +286,47 @@ html, body, #root {
   opacity: 0.8;
   margin: 0.3rem 0;
 }
+.recipe-section {
+  position: relative;
+  margin-top: 1.5rem;
+  min-height: 220px; 
+}
 
 .recipe-rating {
   font-size: 0.9rem;
   color: #ffd700;
 }
 
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+  z-index: 5;
+  pointer-events: none; 
+}
+
 .no-results, .loading-text {
   text-align: center;
   opacity: 0.8;
 }
+
+.electric-border-bottom {
+  display: block;
+}
+
+.electric-border-bottom .eb-stroke,
+.electric-border-bottom .eb-glow-1,
+.electric-border-bottom .eb-glow-2 {
+  border-top-width: 0;
+  border-left-width: 0;
+  border-right-width: 0;
+}
+
+.electric-border-bottom .eb-background-glow {
+  display: none;
+}
+
