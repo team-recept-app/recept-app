@@ -34,13 +34,26 @@ def login():
     if not email or not password:
         return jsonify({"msg": "Hiányzó email vagy jelszó"}), 400
 
-    user_row = query_one("SELECT id, password_hash FROM users WHERE email = ?", (email,))
+    user_row = query_one("SELECT * FROM users WHERE email = ?", (email,))
 
     if user_row and check_password_hash(user_row["password_hash"], password):
         access_token = create_access_token(identity=str(user_row["id"]))
-        return jsonify(access_token=access_token)
+        return jsonify(
+            access_token=access_token,
+            user_id=user_row["id"],
+            email=user_row["email"],
+            name=user_row["name"],
+            is_admin = user_row["is_admin"] if "is_admin" in user_row.keys() else 0
+        )
     else:
         return jsonify({"msg": "Helytelen email vagy jelszó"}), 401
+    
+@app.route("/me", methods=["GET"])
+@jwt_required()
+def me():
+    user_id = get_jwt_identity()
+    row = query_one("SELECT id, email, name FROM users WHERE id = ?", (user_id,))
+    return jsonify({key: row[key] for key in row.keys()})
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -90,13 +103,24 @@ def register():
     }), 201
 
 @app.route("/recipes", methods=["GET"])
+
 def list_recipes():
     search = request.args.get("q")
     include_allergens = request.args.get("allergens")  # e.g. "GL,MI"
     exclude_allergens = request.args.get("exclude")    # e.g. "EG,PN"
+    user_id = request.args.get("user_id")
+
+    #if not user_id:
+    #    user_id = 1
 
     params = []
     where_clauses = []
+
+    # --- User filter ---
+    if user_id:
+        where_clauses.append("r.author_id = ?")
+        params.append(user_id)
+
 
     # --- Base search filter ---
     if search:
@@ -142,6 +166,17 @@ def list_recipes():
 
     recipes_rows = query_all(base_query, tuple(params))
 
+     #--- Load user favorites if user_id is given ---
+    user_favorites = set()
+    fav_query = "SELECT recipe_id FROM favorites"
+    if user_id:
+        fav_query += f" WHERE user_id = {user_id}"
+    fav_rows = query_all(fav_query)                    
+                         
+                          
+    user_favorites = {row["recipe_id"] for row in fav_rows}
+
+
     # --- Group joined results by recipe_id ---
     recipes_dict = {}
     for row in recipes_rows:
@@ -153,6 +188,7 @@ def list_recipes():
             recipe["allergens"] = []
             ##recipe["image_url"] = f"http://localhost:8000/static/images/{recipe["image_url"]}"
             recipe["average_rating"] = get_average_rating(rid)
+            recipe["is_favorite"] = (rid in user_favorites)
             recipes_dict[rid] = recipe
 
         # Append allergen info if present

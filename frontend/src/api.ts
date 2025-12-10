@@ -23,6 +23,7 @@ export type Recipe = {
   allergens: RecipeAllergen[];
   image_url?: string;
   average_rating?: number | null;
+  is_favorite: boolean;
 };
 
 type ListResponse = { recipes: Recipe[] };

@@ -187,6 +187,7 @@ export default function HomePage({
           {r.average_rating != null && (
             <div className="recipe-rating">⭐ {r.average_rating}</div>
           )}
+          <div className="recipe-rating">{r.is_favorite ? "❤️" : "🤍"}</div>
         </div>
       </div>
     ))}
