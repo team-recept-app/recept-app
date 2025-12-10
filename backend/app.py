@@ -103,12 +103,16 @@ def register():
     }), 201
 
 @app.route("/recipes", methods=["GET"])
-
+@jwt_required()
 def list_recipes():
     search = request.args.get("q")
     include_allergens = request.args.get("allergens")  # e.g. "GL,MI"
     exclude_allergens = request.args.get("exclude")    # e.g. "EG,PN"
     user_id = request.args.get("user_id")
+    mine = request.args.get("mine") == "true"
+
+    if mine:
+        user_id = get_jwt_identity()
 
     #if not user_id:
     #    user_id = 1
@@ -275,7 +279,38 @@ def list_allergens():
     return jsonify({"allergens": allergens}), 200
 
 
+@app.route("/favorites/<int:recipe_id>", methods=["POST"])
+@jwt_required()
+def add_favorite(recipe_id):
+    user_id = int(get_jwt_identity())
+
+    try:
+        execute(
+            "INSERT OR IGNORE INTO favorites (user_id, recipe_id) VALUES (?, ?)",
+            (user_id, recipe_id),
+        )
+        return jsonify({"msg": "Favorit hozzáadva", "recipe_id": recipe_id}), 200
+
+    except Exception as e:
+        return jsonify({"msg": f"Hiba a kedvenc hozzáadásakor: {e}"}), 500
+    
+
+@app.route("/favorites/<int:recipe_id>", methods=["DELETE"])
+@jwt_required()
+def delete_favorite(recipe_id):
+    user_id = int(get_jwt_identity())
+
+    try:
+        execute(
+            "DELETE FROM favorites WHERE user_id = ? AND recipe_id = ?",
+            (user_id, recipe_id),
+        )
+        return jsonify({"msg": "Favorit törölve", "recipe_id": recipe_id}), 200
+
+    except Exception as e:
+        return jsonify({"msg": f"Hiba a kedvenc törlésekor: {e}"}), 500
 
 if __name__ == "__main__":
     init_db()
     app.run(host="127.0.0.1", port=8000, debug=True)
+

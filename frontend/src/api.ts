@@ -34,6 +34,13 @@ type FetchRecipesOpts = {
   exclude?: string[];
 };
 
+
+function authHeaders() {
+  const token = localStorage.getItem("token");
+  return token ? { "Authorization": `Bearer ${token}` } : {};
+}
+
+
 export async function fetchAllergens(): Promise<Allergen[]> {
   const r = await fetch(`${API}/allergens`);
   if (!r.ok) return [];
@@ -56,7 +63,10 @@ export async function fetchRecipes(arg?: string | FetchRecipesOpts): Promise<Lis
   const qs = params.toString();
   if (qs) url += `?${qs}`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, { 
+    headers: authHeaders(),
+  });
+
   if (!res.ok) throw new Error(`GET /recipes ${res.status}`);
   return res.json();
 }
