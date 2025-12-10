@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from flask import send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity
 from db import init_db, query_one, query_all, execute, get_average_rating, now_iso
@@ -12,6 +13,11 @@ CORS(app)
 app.config["JWT_SECRET_KEY"] = "nagyon-titkos-receptek-kulcsa-ne-add-ki!"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
 jwt = JWTManager(app)
+
+
+@app.route("/api/images/<filename>")
+def serve_image(filename):
+    return send_from_directory("static/images", filename)
 
 
 @app.route("/health", methods=["GET"])
@@ -97,7 +103,7 @@ def list_recipes():
         wildcard = f"%{search}%"
         where_clauses.append("(r.title LIKE ? OR r.ingredients LIKE ? OR r.steps LIKE ? OR r.summary LIKE ?)")
         params.extend([wildcard, wildcard, wildcard, wildcard])
-
+        
     # --- Base SELECT with joins ---
     base_query = """
         SELECT r.*, a.code AS allergen_code, a.name AS allergen_name, a.description AS allergen_description
@@ -145,7 +151,7 @@ def list_recipes():
             recipe["ingredients"] = from_json_list(recipe["ingredients"])
             recipe["steps"] = from_json_list(recipe["steps"])
             recipe["allergens"] = []
-            recipe["image_url"] = f"http://localhost:8000/static/images/{recipe["image_url"]}"
+            ##recipe["image_url"] = f"http://localhost:8000/static/images/{recipe["image_url"]}"
             recipe["average_rating"] = get_average_rating(rid)
             recipes_dict[rid] = recipe
 

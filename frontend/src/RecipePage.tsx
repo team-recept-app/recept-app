@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "../styles/recipePageStyles.css";
 import "../styles/homepageStyles.css";
-import type { Recipe } from "./api";
+import  { type Recipe, API } from "./api";
 
 type RecipeAllergen = string | {
   code?: string;
@@ -96,7 +96,7 @@ export default function RecipePage({ recipe, onBack, onLogout }: Props) {
           <div className="recipe-hero-left">
             {recipe.image_url ? (
               <img
-                src={recipe.image_url}
+                src={`${API}/api/images/${recipe.image_url}`}
                 alt={recipe.title}
                 className="recipe-hero-img"
               />

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchRecipes, fetchAllergens, type Recipe, type Allergen } from "./api";
+import { fetchRecipes, fetchAllergens, type Recipe, type Allergen,API } from "./api";
 import "../styles/homepageStyles.css";
 import ElectricBorder from "../components/ElectricBorder";
+
 
 
 
@@ -178,7 +179,7 @@ export default function HomePage({
         onClick={() => onOpenRecipe(r)}
       >
         {r.image_url && (
-          <img src={r.image_url} alt={r.title} className="recipe-img" />
+          <img src={`${API}/api/images/${r.image_url}`} alt={r.title} className="recipe-img" />
         )}
         <div className="recipe-info">
           <h3 className="recipe-title">{r.title}</h3>
