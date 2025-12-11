@@ -108,21 +108,25 @@ def list_recipes():
     search = request.args.get("q")
     include_allergens = request.args.get("allergens")  # e.g. "GL,MI"
     exclude_allergens = request.args.get("exclude")    # e.g. "EG,PN"
+    favorites_only = request.args.get("favorites") == "true"
     user_id = request.args.get("user_id")
-    mine = request.args.get("mine") == "true"
+    own = request.args.get("own") == "true"
 
-    if mine:
+    if not user_id:
         user_id = get_jwt_identity()
-
-    #if not user_id:
-    #    user_id = 1
 
     params = []
     where_clauses = []
 
     # --- User filter ---
-    if user_id:
+    if own:
         where_clauses.append("r.author_id = ?")
+        params.append(user_id)
+
+
+    # --- Favorites filter ---
+    if favorites_only:
+        where_clauses.append("r.id IN (SELECT recipe_id FROM favorites WHERE user_id = ?)")
         params.append(user_id)
 
 
