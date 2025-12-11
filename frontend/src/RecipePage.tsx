@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "../styles/recipePageStyles.css";
 import "../styles/homepageStyles.css";
-import type { Recipe } from "./api";
+import { API, addFavorite, removeFavorite, type Recipe } from "./api";
 
 type RecipeAllergen = string | {
   code?: string;
@@ -13,11 +13,16 @@ type Props = {
   recipe: Recipe;
   onBack: () => void;
   onLogout: () => void;
+  token: string;
 };
 
-export default function RecipePage({ recipe, onBack, onLogout }: Props) {
+export default function RecipePage({ recipe, onBack, onLogout, token }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
-   useEffect(() => {
+  const [isFavorite, setIsFavorite] = useState<boolean>(!!recipe.is_favorite);
+  const [favLoading, setFavLoading] = useState(false);
+  const [favError, setFavError] = useState<string | null>(null);
+
+  useEffect(() => {
     const root = document.querySelector(".app-root");
     if (root instanceof HTMLElement) {
       root.scrollTop = 0;
@@ -26,14 +31,45 @@ export default function RecipePage({ recipe, onBack, onLogout }: Props) {
     }
   }, []);
 
-
   const allergenLabels = Array.isArray(recipe.allergens)
     ? (recipe.allergens as RecipeAllergen[])
-        .map((a) =>
+        .map(a =>
           typeof a === "string" ? a : a.name ?? a.code ?? ""
         )
-        .filter((label) => label && label.trim().length > 0)
+        .filter(label => label && label.trim().length > 0)
     : [];
+
+  async function toggleFavorite() {
+    setFavError(null);
+    setFavLoading(true);
+    try {
+      if (isFavorite) {
+        await removeFavorite(recipe.id, token);
+        setIsFavorite(false);
+      } else {
+        await addFavorite(recipe.id, token);
+        setIsFavorite(true);
+      }
+
+      const raw = localStorage.getItem("selectedRecipe");
+      if (raw) {
+        try {
+          const stored = JSON.parse(raw) as Recipe;
+          if (stored.id === recipe.id) {
+            stored.is_favorite = !isFavorite;
+            localStorage.setItem("selectedRecipe", JSON.stringify(stored));
+          }
+        } catch {
+          //...
+        }
+      }
+    } catch (err) {
+      console.error("Kedvenc módosítás hiba:", err);
+      setFavError("Nem sikerült módosítani a kedvencek között.");
+    } finally {
+      setFavLoading(false);
+    }
+  }
 
   return (
     <div className="recipe-page-root">
@@ -47,7 +83,7 @@ export default function RecipePage({ recipe, onBack, onLogout }: Props) {
         <div className="menu">
           <button
             className="burger"
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={() => setMenuOpen(v => !v)}
             aria-label="Menu"
           >
             <span />
@@ -96,7 +132,7 @@ export default function RecipePage({ recipe, onBack, onLogout }: Props) {
           <div className="recipe-hero-left">
             {recipe.image_url ? (
               <img
-                src={recipe.image_url}
+                src={`${API}/api/images/${recipe.image_url}`}
                 alt={recipe.title}
                 className="recipe-hero-img"
               />
@@ -141,6 +177,23 @@ export default function RecipePage({ recipe, onBack, onLogout }: Props) {
                 </div>
               </div>
             )}
+
+            <button
+              className={
+                "rp-fav-btn" +
+                (isFavorite ? " rp-fav-btn--active" : "") +
+                (favLoading ? " rp-fav-btn--loading" : "")
+              }
+              onClick={toggleFavorite}
+              disabled={favLoading}
+            >
+              {favLoading
+                ? "Mentés..."
+                : isFavorite
+                ? "Eltávolítás a kedvencek közül"
+                : "Hozzáadás a kedvencekhez"}
+            </button>
+            {favError && <div className="rp-fav-error">{favError}</div>}
           </div>
         </section>
 

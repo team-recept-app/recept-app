@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchRecipes, fetchAllergens, type Recipe, type Allergen } from "./api";
+import { fetchRecipes, fetchAllergens, API, type Recipe, type Allergen } from "./api";
 import "../styles/homepageStyles.css";
 import ElectricBorder from "../components/ElectricBorder";
 
@@ -8,10 +8,16 @@ import ElectricBorder from "../components/ElectricBorder";
 export default function HomePage({
   onLogout,
   onOpenRecipe,
+  token,
+  onOpenProfile,
 }: {
   onLogout: () => void;
   onOpenRecipe: (recipe: Recipe) => void;
+  token: string;
+  onOpenProfile: () => void;  
 }) {
+
+
   const [query, setQuery] = useState("");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [view, setView] = useState<Recipe[]>([]);
@@ -30,7 +36,7 @@ export default function HomePage({
     refilter(recipes, query, category, excludedCodes);
   }, [recipes, query, category, excludedCodes]);
 
-  async function loadAllergens() {
+    async function loadAllergens() {
     const list = await fetchAllergens().catch(() => []);
     setAllergens(list);
   }
@@ -38,12 +44,16 @@ export default function HomePage({
   async function loadRecipes(opts?: { q?: string; exclude?: string[] }) {
     setLoading(true);
     try {
-      const data = await fetchRecipes(opts);
+      const data = await fetchRecipes(opts, token); 
       setRecipes(data.recipes);
+    } catch (err) {
+      console.error("Nem sikerült betölteni a recepteket:", err);
+      setRecipes([]);
     } finally {
       setLoading(false);
     }
   }
+
 
   function refilter(base: Recipe[], q: string, cat: string, excluded: string[]) {
     const ql = q.trim().toLowerCase();
@@ -99,12 +109,38 @@ export default function HomePage({
             <span />
           </button>
           {menuOpen && (
-            <div className="dropdown" onMouseLeave={() => setMenuOpen(false)}>
-              <button className="dd-item" onClick={() => setMenuOpen(false)}>Kezdőlap</button>
-              <button className="dd-item" onClick={() => alert("Profilom később")}>Profilom</button>
-              <button className="dd-item danger" onClick={onLogout}>Kijelentkezés</button>
-            </div>
-          )}
+  <div className="dropdown" onMouseLeave={() => setMenuOpen(false)}>
+    <button
+      className="dd-item"
+      onClick={() => {
+        setMenuOpen(false);
+      }}
+    >
+      Kezdőlap
+    </button>
+
+    <button
+      className="dd-item"
+      onClick={() => {
+        setMenuOpen(false);
+        onOpenProfile();   
+      }}
+    >
+      Profilom
+    </button>
+
+    <button
+      className="dd-item danger"
+      onClick={() => {
+        setMenuOpen(false);
+        onLogout();
+      }}
+    >
+      Kijelentkezés
+    </button>
+  </div>
+)}
+
         </div>
       </header>
     </ElectricBorder>
@@ -178,8 +214,13 @@ export default function HomePage({
         onClick={() => onOpenRecipe(r)}
       >
         {r.image_url && (
-          <img src={r.image_url} alt={r.title} className="recipe-img" />
-        )}
+  <img
+    src={`${API}/api/images/${r.image_url}`}
+    alt={r.title}
+    className="recipe-img"
+  />
+)}
+
         <div className="recipe-info">
           <h3 className="recipe-title">{r.title}</h3>
           <p className="recipe-summary">{r.summary}</p>

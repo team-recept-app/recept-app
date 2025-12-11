@@ -204,6 +204,22 @@ RATINGS = [
     (3, 2, 4),
 ]
 
+
+FAVORITES = [
+    # user_id, recipe_id
+    (1, 1),  # Anna kedvencei
+    (1, 4),
+    (1, 8),
+
+    (2, 3),  # Béla kedvencei
+    (2, 5),
+
+    (3, 2),  # Admin kedvencei
+    (3, 6),
+    (3, 10),
+]
+
+
 def ensure_users():
     """Seeds the users table if it's empty."""
     count = query_one("SELECT COUNT(*) AS c FROM users")['c']
@@ -293,6 +309,22 @@ def ensure_ratings():
 
     print("✅ Ratings seeded.")
 
+
+def ensure_favorites():
+    """Seeds the favorites table if it's empty."""
+    count = query_one("SELECT COUNT(*) AS c FROM favorites")['c']
+    if count > 0:
+        return
+
+    for user_id, recipe_id in FAVORITES:
+        execute(
+            "INSERT INTO favorites (user_id, recipe_id) VALUES (?, ?)",
+            (user_id, recipe_id),
+        )
+
+    print("✅ Favorites seeded.")
+
+
 def main():
     init_db()
 
@@ -301,6 +333,7 @@ def main():
     ensure_recipes()
     ensure_recipe_allergens()
     ensure_ratings()
+    ensure_favorites()
 
     users = query_all("SELECT id, email, name FROM users ORDER BY id")
     recipes = query_all("SELECT id, title, author_id FROM recipes ORDER BY id")

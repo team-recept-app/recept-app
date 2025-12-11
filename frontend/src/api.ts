@@ -1,4 +1,7 @@
-const API = "http://127.0.0.1:8000";
+
+
+export const API = "http://127.0.0.1:8000";
+
 
 export type Allergen = {
   id: number;
@@ -23,6 +26,7 @@ export type Recipe = {
   allergens: RecipeAllergen[];
   image_url?: string;
   average_rating?: number | null;
+  is_favorite?: boolean;
 };
 
 type ListResponse = { recipes: Recipe[] };
@@ -31,6 +35,7 @@ type FetchRecipesOpts = {
   q?: string;
   include?: string[];
   exclude?: string[];
+  favorites?: boolean;
 };
 
 export async function fetchAllergens(): Promise<Allergen[]> {
@@ -40,7 +45,10 @@ export async function fetchAllergens(): Promise<Allergen[]> {
   return (data.allergens as Allergen[]) ?? [];
 }
 
-export async function fetchRecipes(arg?: string | FetchRecipesOpts): Promise<ListResponse> {
+export async function fetchRecipes(
+  arg?: string | FetchRecipesOpts,
+  token?: string
+): Promise<ListResponse> {
   let url = `${API}/recipes`;
   const params = new URLSearchParams();
 
@@ -50,13 +58,23 @@ export async function fetchRecipes(arg?: string | FetchRecipesOpts): Promise<Lis
     if (arg.q?.trim()) params.set("q", arg.q.trim());
     if (arg.include && arg.include.length) params.set("allergens", arg.include.join(","));
     if (arg.exclude && arg.exclude.length) params.set("exclude", arg.exclude.join(","));
+    if (arg.favorites) params.set("favorites", "true");
   }
 
   const qs = params.toString();
   if (qs) url += `?${qs}`;
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`GET /recipes ${res.status}`);
+  const headers: HeadersInit = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(url, { headers });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    console.error("fetchRecipes error:", res.status, text);
+    throw new Error(`GET /recipes ${res.status}`);
+  }
   return res.json();
 }
 
@@ -90,3 +108,31 @@ export async function register(
   }
   return data.user as { id: number; email: string; name: string };
 }
+
+
+export async function addFavorite(recipeId: number, token: string): Promise<void> {
+  const res = await fetch(`${API}/favorites/${recipeId}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(`Nem sikerült hozzáadni kedvencekhez (${res.status}): ${errText}`);
+  }
+}
+
+export async function removeFavorite(recipeId: number, token: string): Promise<void> {
+  const res = await fetch(`${API}/favorites/${recipeId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(`Nem sikerült törölni a kedvencek közül (${res.status}): ${errText}`);
+  }
+}
+

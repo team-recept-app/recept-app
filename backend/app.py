@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from flask import send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity
 from db import init_db, query_one, query_all, execute, get_average_rating, now_iso
@@ -12,6 +13,11 @@ CORS(app)
 app.config["JWT_SECRET_KEY"] = "nagyon-titkos-receptek-kulcsa-ne-add-ki!"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
 jwt = JWTManager(app)
+
+
+@app.route("/api/images/<filename>")
+def serve_image(filename):
+    return send_from_directory("static/images", filename)
 
 
 @app.route("/health", methods=["GET"])
@@ -28,13 +34,26 @@ def login():
     if not email or not password:
         return jsonify({"msg": "Hiányzó email vagy jelszó"}), 400
 
-    user_row = query_one("SELECT id, password_hash FROM users WHERE email = ?", (email,))
+    user_row = query_one("SELECT * FROM users WHERE email = ?", (email,))
 
     if user_row and check_password_hash(user_row["password_hash"], password):
         access_token = create_access_token(identity=str(user_row["id"]))
-        return jsonify(access_token=access_token)
+        return jsonify(
+            access_token=access_token,
+            user_id=user_row["id"],
+            email=user_row["email"],
+            name=user_row["name"],
+            is_admin = user_row["is_admin"] if "is_admin" in user_row.keys() else 0
+        )
     else:
         return jsonify({"msg": "Helytelen email vagy jelszó"}), 401
+    
+@app.route("/me", methods=["GET"])
+@jwt_required()
+def me():
+    user_id = get_jwt_identity()
+    row = query_one("SELECT id, email, name FROM users WHERE id = ?", (user_id,))
+    return jsonify({key: row[key] for key in row.keys()})
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -84,20 +103,39 @@ def register():
     }), 201
 
 @app.route("/recipes", methods=["GET"])
+@jwt_required()
 def list_recipes():
     search = request.args.get("q")
     include_allergens = request.args.get("allergens")  # e.g. "GL,MI"
     exclude_allergens = request.args.get("exclude")    # e.g. "EG,PN"
+    favorites_only = request.args.get("favorites") == "true"
+    user_id = request.args.get("user_id")
+    own = request.args.get("own") == "true"
+
+    if not user_id:
+        user_id = get_jwt_identity()
 
     params = []
     where_clauses = []
+
+    # --- User filter ---
+    if own:
+        where_clauses.append("r.author_id = ?")
+        params.append(user_id)
+
+
+    # --- Favorites filter ---
+    if favorites_only:
+        where_clauses.append("r.id IN (SELECT recipe_id FROM favorites WHERE user_id = ?)")
+        params.append(user_id)
+
 
     # --- Base search filter ---
     if search:
         wildcard = f"%{search}%"
         where_clauses.append("(r.title LIKE ? OR r.ingredients LIKE ? OR r.steps LIKE ? OR r.summary LIKE ?)")
         params.extend([wildcard, wildcard, wildcard, wildcard])
-
+        
     # --- Base SELECT with joins ---
     base_query = """
         SELECT r.*, a.code AS allergen_code, a.name AS allergen_name, a.description AS allergen_description
@@ -136,6 +174,17 @@ def list_recipes():
 
     recipes_rows = query_all(base_query, tuple(params))
 
+     #--- Load user favorites if user_id is given ---
+    user_favorites = set()
+    fav_query = "SELECT recipe_id FROM favorites"
+    if user_id:
+        fav_query += f" WHERE user_id = {user_id}"
+    fav_rows = query_all(fav_query)                    
+                         
+                          
+    user_favorites = {row["recipe_id"] for row in fav_rows}
+
+
     # --- Group joined results by recipe_id ---
     recipes_dict = {}
     for row in recipes_rows:
@@ -145,7 +194,9 @@ def list_recipes():
             recipe["ingredients"] = from_json_list(recipe["ingredients"])
             recipe["steps"] = from_json_list(recipe["steps"])
             recipe["allergens"] = []
+            ##recipe["image_url"] = f"http://localhost:8000/static/images/{recipe["image_url"]}"
             recipe["average_rating"] = get_average_rating(rid)
+            recipe["is_favorite"] = (rid in user_favorites)
             recipes_dict[rid] = recipe
 
         # Append allergen info if present
@@ -232,7 +283,38 @@ def list_allergens():
     return jsonify({"allergens": allergens}), 200
 
 
+@app.route("/favorites/<int:recipe_id>", methods=["POST"])
+@jwt_required()
+def add_favorite(recipe_id):
+    user_id = int(get_jwt_identity())
+
+    try:
+        execute(
+            "INSERT OR IGNORE INTO favorites (user_id, recipe_id) VALUES (?, ?)",
+            (user_id, recipe_id),
+        )
+        return jsonify({"msg": "Favorit hozzáadva", "recipe_id": recipe_id}), 200
+
+    except Exception as e:
+        return jsonify({"msg": f"Hiba a kedvenc hozzáadásakor: {e}"}), 500
+    
+
+@app.route("/favorites/<int:recipe_id>", methods=["DELETE"])
+@jwt_required()
+def delete_favorite(recipe_id):
+    user_id = int(get_jwt_identity())
+
+    try:
+        execute(
+            "DELETE FROM favorites WHERE user_id = ? AND recipe_id = ?",
+            (user_id, recipe_id),
+        )
+        return jsonify({"msg": "Favorit törölve", "recipe_id": recipe_id}), 200
+
+    except Exception as e:
+        return jsonify({"msg": f"Hiba a kedvenc törlésekor: {e}"}), 500
 
 if __name__ == "__main__":
     init_db()
     app.run(host="127.0.0.1", port=8000, debug=True)
+
