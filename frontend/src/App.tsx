@@ -5,6 +5,7 @@ import "../styles/app.css";
 import HomePage from "./HomePage";
 import RecipePage from "./RecipePage";
 import ProfilePage from "./ProfilePage";
+import AdminUsersPage from "./AdminUsersPage";
 
 
 
@@ -24,9 +25,11 @@ const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
 
 export default function App() {
 
-  const resetToken = new URLSearchParams(window.location.search).get("token");
+  const resetToken = new URLSearchParams(window.location.search).get("access_token");
   const [newPw, setNewPw] = useState("");
   const [newPw2, setNewPw2] = useState("");
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem("is_admin") === "1");
+
 
   const [mode, setMode] = useState<"login" | "register" | "reset">(resetToken ? "reset" : "login");
 
@@ -36,9 +39,7 @@ export default function App() {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem("token")
-  );
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("access_token"));
 
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(() => {
     const raw = localStorage.getItem("selectedRecipe");
@@ -50,7 +51,7 @@ export default function App() {
     }
   });
 
-  const [view, setView] = useState<"home" | "profile">("home");
+  const [view, setView] = useState<"home" | "profile" | "admin-users">("home");
 
   const switchToLogin = () => {
     setMode("login");
@@ -94,6 +95,7 @@ export default function App() {
         setPw("");
         setPw2("");
         setName("");
+        setIsAdmin(false);
       } catch (err: unknown) {
         setError(
           err instanceof Error ? err.message : "Sikertelen regisztráció"
@@ -104,8 +106,12 @@ export default function App() {
 
     try {
       const t = await login(email.trim(), pw);
-      localStorage.setItem("token", t);
-      setToken(t);
+      localStorage.setItem("access_token", t.access_token);
+      localStorage.setItem("is_admin", String(t.is_admin));
+      localStorage.setItem("user_id", String(t.user_id));
+      setToken(t.access_token);
+      setIsAdmin(Boolean(Number(t.is_admin)));
+      console.log("LOGIN RESPONSE user_id:", t.user_id);
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Sikertelen bejelentkezés"
@@ -114,7 +120,7 @@ export default function App() {
   }
 
   function logout() {
-    localStorage.removeItem("token");
+    localStorage.removeItem("access_token");
     localStorage.removeItem("selectedRecipe");
     setToken(null);
     setSelectedRecipe(null);
@@ -304,30 +310,37 @@ export default function App() {
     );
   }
 
-  return (
-    <Shell>
-      {selectedRecipe ? (
-        <RecipePage
-   recipe={selectedRecipe}
-   onBack={backToHome}
-   onLogout={logout}
-   token={token as string}
-/>
-      ) : view === "home" ? (
-        <HomePage
-          onLogout={logout}
-          onOpenRecipe={openRecipe}
-          token={token as string}
-          onOpenProfile={() => setView("profile")}
-        />
-      ) : (
-        <ProfilePage
-  onLogout={logout}
-  onBackHome={() => setView("home")}
-  token={token}              
-  onOpenRecipe={openRecipe}  
-/>
-      )}
-    </Shell>
-  );
+return (
+  <Shell>
+    {selectedRecipe ? (
+      <RecipePage
+        recipe={selectedRecipe}
+        onBack={backToHome}
+        onLogout={logout}
+        token={token as string}
+      />
+    ) : view === "home" ? (
+      <HomePage
+        onLogout={logout}
+        onOpenRecipe={openRecipe}
+        token={token as string}
+        onOpenProfile={() => setView("profile")}
+        isAdmin={isAdmin}
+        onOpenAdminUsers={() => setView("admin-users")}   // ← HERE
+      />
+    ) : view === "admin-users" ? (                         // ← HERE
+      <AdminUsersPage
+        onBack={() => setView("home")}
+        onLogout={logout}
+      />
+    ) : (
+      <ProfilePage
+        onLogout={logout}
+        onBackHome={() => setView("home")}
+        token={token}
+        onOpenRecipe={openRecipe}
+      />
+    )}
+  </Shell>
+);
 }

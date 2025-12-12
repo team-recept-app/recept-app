@@ -78,8 +78,9 @@ export async function fetchRecipes(
   return res.json();
 }
 
-export async function login(email: string, password: string): Promise<string> {
-  const res = await fetch(`${API}/login`, {
+export async function login(email: string, password: string): 
+  Promise<{access_token: string; user_id: number, is_admin: number; name: string;}>{
+    const res = await fetch(`${API}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -89,7 +90,7 @@ export async function login(email: string, password: string): Promise<string> {
     throw new Error(err?.msg || `Login failed (${res.status})`);
   }
   const data = await res.json();
-  return data.access_token as string;
+  return data;
 }
 
 export async function register(

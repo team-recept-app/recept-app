@@ -330,3 +330,114 @@ html, body, #root {
   display: none;
 }
 
+.dd-group {
+  margin-top: 0.25rem;
+}
+
+.dd-item--header {
+  font-weight: 600;
+  opacity: 0.75;
+  cursor: default;
+}
+
+.dd-sub {
+  padding-left: 1.5rem;   /* 👈 THIS creates the indent */
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* --- Admin Users layout --- */
+
+.admin-user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;                 /* equal vertical spacing */
+  align-items: center;
+}
+
+.admin-user-row {
+  display: grid;
+  grid-template-columns: 1fr 180px; /* text | buttons */
+  gap: 16px;
+  align-items: center;
+
+  
+   
+  padding: 12px 16px;
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(6px);
+  min-width: 400px;
+ 
+}
+
+.admin-user-row.is-editing {
+  background: rgba(255, 255, 255, 0.15);
+  min-width: 450px;
+}
+
+
+
+.admin-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-user-name {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-user-email {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.admin-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(255, 200, 80, 0.2);
+}
+
+.admin-user-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;                 /* equal button spacing */
+}
+
+.admin-user-actions .rp-btn {
+  width: 100%;              /* SAME button width */
+}
+
+
+.recipe-section-title {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;                 /* equal button spacing */
+  align-items: center;
+}
+
+
+
+/* --- Disabled button styling --- */
+button:disabled,
+.rp-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+ 
+}
+
+/* Prevent hover/active effects on disabled buttons */
+button:disabled:hover,
+.rp-btn:disabled:hover,
+button:disabled:active,
+.rp-btn:disabled:active {
+  box-shadow: none;
+  transform: none;
+}
+

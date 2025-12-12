@@ -10,11 +10,15 @@ export default function HomePage({
   onOpenRecipe,
   token,
   onOpenProfile,
+  isAdmin,
+  onOpenAdminUsers
 }: {
   onLogout: () => void;
   onOpenRecipe: (recipe: Recipe) => void;
   token: string;
   onOpenProfile: () => void;  
+  isAdmin: boolean;
+  onOpenAdminUsers: () => void;
 }) {
 
 
@@ -109,7 +113,7 @@ export default function HomePage({
             <span />
           </button>
           {menuOpen && (
-  <div className="dropdown" onMouseLeave={() => setMenuOpen(false)}>
+  <div className="dropdown">
     <button
       className="dd-item"
       onClick={() => {
@@ -128,6 +132,31 @@ export default function HomePage({
     >
       Profilom
     </button>
+
+
+{isAdmin && (
+  <div className="dd-group">
+    <div className="dd-item dd-item--header">Admin</div>
+
+    <button
+      className="dd-item dd-sub"
+      onClick={() => {
+        setMenuOpen(false);
+        onOpenAdminUsers();
+      }}
+    >
+      Felhasználók
+    </button>
+
+    <button className="dd-item dd-sub" disabled>
+      Allergének
+    </button>
+
+    <button className="dd-item dd-sub" disabled>
+      Kategóriák
+    </button>
+  </div>
+)}
 
     <button
       className="dd-item danger"
