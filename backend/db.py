@@ -21,10 +21,12 @@ def init_db():
         id INTEGER PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
         name TEXT NOT NULL,
+        is_admin  INTEGER NOT NULL DEFAULT 0,
         password_hash TEXT NOT NULL,
         created_at TEXT NOT NULL,
         reset_token TEXT,
         reset_token_expires_at INTEGER
+        
     );
     """)
 

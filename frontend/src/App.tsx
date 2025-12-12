@@ -1,10 +1,12 @@
 import { useState, memo } from "react";
-import { login, register, type Recipe } from "./api";
+import { API, forgotPassword, login, register, type Recipe } from "./api";
 import Orb from "../components/Orb";
 import "../styles/app.css";
 import HomePage from "./HomePage";
 import RecipePage from "./RecipePage";
 import ProfilePage from "./ProfilePage";
+
+
 
 const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -21,7 +23,13 @@ const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
 });
 
 export default function App() {
-  const [mode, setMode] = useState<"login" | "register">("login");
+
+  const resetToken = new URLSearchParams(window.location.search).get("token");
+  const [newPw, setNewPw] = useState("");
+  const [newPw2, setNewPw2] = useState("");
+
+  const [mode, setMode] = useState<"login" | "register" | "reset">(resetToken ? "reset" : "login");
+
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
@@ -133,6 +141,67 @@ export default function App() {
             <h2 className="card-title">
               {mode === "login" ? "Bejelentkezés" : "Regisztráció"}
             </h2>
+              {mode === "reset" ? (
+                <form
+                  onSubmit={async e => {
+                    e.preventDefault();
+                    setError(null);
+                    setInfo(null);
+
+                    if (!newPw || !newPw2) {
+                      setError("Minden mezőt ki kell tölteni.");
+                      return;
+                    }
+                    if (newPw !== newPw2) {
+                      setError("A két jelszó nem egyezik.");
+                      return;
+                    }
+
+                    try {
+                      await fetch(`${API}/reset-password`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          token: resetToken,
+                          password: newPw,
+                        }),
+                      });
+
+                      setInfo("Jelszó sikeresen módosítva. Most jelentkezz be.");
+                      setMode("login");
+                      window.history.replaceState({}, "", "/");
+                    } catch {
+                      setError("A jelszó módosítása nem sikerült.");
+                    }
+                  }}
+                  className="form-grid"
+                >
+                  <label className="label">Új jelszó</label>
+                  <input
+                    className="input"
+                    type="password"
+                    value={newPw}
+                    onChange={e => setNewPw(e.target.value)}
+                  />
+
+                  <label className="label">Új jelszó újra</label>
+                  <input
+                    className="input"
+                    type="password"
+                    value={newPw2}
+                    onChange={e => setNewPw2(e.target.value)}
+                  />
+
+                  <button type="submit" className="btn-primary">
+                    Jelszó módosítása
+                  </button>
+
+                  {error && <div className="error">{error}</div>}
+                  {info && <div className="info">{info}</div>}
+                </form>
+              ) : (
+                
+              
 
             <form onSubmit={onSubmit} className="form-grid">
               {mode === "register" && (
@@ -199,12 +268,36 @@ export default function App() {
                 </button>
               )}
 
+              {mode === "login" && (
+                <button
+                  type="button"
+                  className="btn-link"
+                  onClick={async () => {
+                    setError(null);
+                    setInfo(null);
+                    if (!email.trim()) {
+                      setError("Add meg az email címed.");
+                      return;
+                    }
+                    try {
+                      await forgotPassword(email.trim());
+                      setInfo("Ha létezik fiók, elküldtük az emailt.");
+                    } catch {
+                      setError("Nem sikerült elküldeni az emailt.");
+                    }
+                  }}
+                >
+                  Elfelejtett jelszó
+                </button>
+              )}
+
               {error && <div className="error">{error}</div>}
               {info && <div className="info">{info}</div>}
               {mode === "login" && (
                 <div className="hint">user1@example.com / password1</div>
               )}
             </form>
+            )}
           </div>
         </div>
       </Shell>

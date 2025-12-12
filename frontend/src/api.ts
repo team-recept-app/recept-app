@@ -136,3 +136,12 @@ export async function removeFavorite(recipeId: number, token: string): Promise<v
   }
 }
 
+export async function forgotPassword(email: string): Promise<void> {
+  const res = await fetch(`${API}/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) throw new Error("Hiba történt");
+}
+
