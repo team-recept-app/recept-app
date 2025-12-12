@@ -441,3 +441,39 @@ button:disabled:active,
   transform: none;
 }
 
+.allergen-user-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;    
+  width: 100%;
+  min-width: 0;
+  justify-items: stretch;
+}
+
+.allergen-user-row {
+  display: grid;
+  grid-template-columns: 1fr 100px; /* text | buttons */
+  gap: 16px;
+  align-items: center;
+   
+  padding: 12px 16px;
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(6px);
+  width: 100;
+  max-width: none;
+ 
+ 
+}
+
+.aaallergen-user-row.is-editing {
+  background: rgba(255, 255, 255, 0.15);
+  width: 450px;
+}
+
+.allergen-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}

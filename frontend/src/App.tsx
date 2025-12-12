@@ -6,6 +6,7 @@ import HomePage from "./HomePage";
 import RecipePage from "./RecipePage";
 import ProfilePage from "./ProfilePage";
 import AdminUsersPage from "./AdminUsersPage";
+import AdminAllergensPage from "./AdminAllergensPage";
 
 
 
@@ -51,7 +52,7 @@ export default function App() {
     }
   });
 
-  const [view, setView] = useState<"home" | "profile" | "admin-users">("home");
+  const [view, setView] = useState<"home" | "profile" | "admin-users" | "admin-allergens">("home");
 
   const switchToLogin = () => {
     setMode("login");
@@ -326,10 +327,17 @@ return (
         token={token as string}
         onOpenProfile={() => setView("profile")}
         isAdmin={isAdmin}
-        onOpenAdminUsers={() => setView("admin-users")}   // ← HERE
+        onOpenAdminUsers={() => setView("admin-users")}   
+        onOpenAdminAllergens={() => setView("admin-allergens")}
+
       />
-    ) : view === "admin-users" ? (                         // ← HERE
+    ) : view === "admin-users" ? (                         
       <AdminUsersPage
+        onBack={() => setView("home")}
+        onLogout={logout}
+      />
+    ) : view === "admin-allergens" ? (                         
+      <AdminAllergensPage
         onBack={() => setView("home")}
         onLogout={logout}
       />
