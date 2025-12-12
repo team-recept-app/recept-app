@@ -220,6 +220,23 @@ FAVORITES = [
 ]
 
 
+CATEGORIES = [
+    ("SOUP", "Levesek", "Leves jellegű ételek"),
+    ("MAIN", "Főételek", "Fő fogások"),
+    ("DESS", "Desszertek", "Édességek"),
+]
+
+def ensure_categories():
+    count = query_one("SELECT COUNT(*) AS c FROM categories")["c"]
+    if count > 0:
+        return
+
+    for code, name, desc in CATEGORIES:
+        execute(
+            "INSERT INTO categories (code, name, description) VALUES (?, ?, ?)",
+            (code, name, desc),
+        )
+
 def ensure_users():
     """Seeds the users table if it's empty."""
     count = query_one("SELECT COUNT(*) AS c FROM users")['c']
@@ -334,6 +351,7 @@ def main():
     ensure_recipe_allergens()
     ensure_ratings()
     ensure_favorites()
+    ensure_categories()
 
     users = query_all("SELECT id, email, name FROM users ORDER BY id")
     recipes = query_all("SELECT id, title, author_id FROM recipes ORDER BY id")

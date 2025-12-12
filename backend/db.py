@@ -84,7 +84,20 @@ def init_db():
         FOREIGN KEY(user_id) REFERENCES users(id),
         FOREIGN KEY(recipe_id) REFERENCES recipes(id)
     );
+
     """)
+                
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT
+    );
+
+
+    """)
+
 
     conn.commit()
     conn.close()

@@ -12,12 +12,14 @@ from datetime import timedelta
 from admin_users import admin_users_bp
 from users import users_bp
 from admin_allergens import admin_allergens_bp
+from admin_categories import admin_categories_bp
 
 
 app = Flask(__name__)
 app.register_blueprint(admin_users_bp)
 app.register_blueprint(users_bp)
 app.register_blueprint(admin_allergens_bp)
+app.register_blueprint(admin_categories_bp)
 CORS(app)
 
 app.config["JWT_SECRET_KEY"] = "nagyon-titkos-receptek-kulcsa-ne-add-ki!"
@@ -284,6 +286,14 @@ def delete_favorite(recipe_id):
 
     except Exception as e:
         return jsonify({"msg": f"Hiba a kedvenc törlésekor: {e}"}), 500
+    
+
+@app.route("/categories", methods=["GET"])
+def list_categories():
+    rows = query_all(
+        "SELECT id, code, name, description FROM categories ORDER BY name ASC"
+    )
+    return jsonify({"categories": [dict(r) for r in rows]})
 
 
 if __name__ == "__main__":
