@@ -95,29 +95,29 @@ Az alábbi ábrák szemléltetik a rendszer felépítését és működését a 
 ### 10.1 Használatieset-diagram (Use Case)
 A diagram bemutatja a Vendég és a Regisztrált felhasználó lehetőségeit. Látható, hogy a "Kedvencek kezelése" csak a regisztrált felhasználó számára érhető el.
 
-![Használatieset-diagram](Rendszer.png)
+![Használatieset-diagram](/recept-app/Dokumentumok/kepek/Rendszer.png)
 
 ### 10.2 Osztálydiagram (Class Diagram)
 Az adatbázis szerkezetét és az osztályok kapcsolatait mutatja. Kiemelendő a User és Recipe közötti több-a-többhöz kapcsolatot megvalósító Favorite osztály.
 
-![Osztálydiagram](Osztályhiearchia.png)
+![Osztálydiagram](/recept-app/Dokumentumok/kepek/Osztályhiearchia.png)
 
 ### 10.3 Szekvenciadiagram – Kedvencek kezelése
 Ez az ábra részletezi a folyamatot, amikor a felhasználó a "Szív" ikonra kattint. Bemutatja a Frontend, a Backend (API) és az Adatbázis közötti kommunikációt, valamint a hitelesítés (Token) ellenőrzését.
 
-![Szekvenciadiagram – Kedvencek kezelése](Kedvencek%20kezelése.png)
+![Szekvenciadiagram – Kedvencek kezelése](/recept-app/Dokumentumok/kepek/Kedvencek%20kezelése.png)
 
 ### 10.4 Komponensdiagram
 A rendszer fizikai és logikai komponenseinek felépítése: a React alapú kliens, a Flask API szerver és az adatbázis réteg kapcsolata.
 
-![Komponensdiagram](Komponensdiagram.png)
+![Komponensdiagram](/recept-app/Dokumentumok/kepek/Komponensdiagram.png)
 
 ### 10.5 Deployment diagram (Eszközök)
 A telepítési környezet bemutatása: hogyan fut a kód a felhasználó eszközén (böngésző), az alkalmazásszerveren és az adatbázisszerveren.
 
-![Deployment diagram](Eszközök.png)
+![Deployment diagram](/recept-app/Dokumentumok/kepek/Eszközök.png)
 
 ### 10.6 Aktivitásdiagram – Keresés
 A keresési és szűrési folyamat lépései, beleértve az allergének kizárását és a találatok (vagy hibaüzenet) megjelenítését.
 
-![Aktivitásdiagram – Keresés](Keresésés.png)
+![Aktivitásdiagram – Keresés](/recept-app/Dokumentumok/kepek/Keresésés.png)
