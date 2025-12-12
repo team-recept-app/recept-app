@@ -17,6 +17,7 @@ from admin_allergens import admin_allergens_bp
 app = Flask(__name__)
 app.register_blueprint(admin_users_bp)
 app.register_blueprint(users_bp)
+app.register_blueprint(admin_allergens_bp)
 CORS(app)
 
 app.config["JWT_SECRET_KEY"] = "nagyon-titkos-receptek-kulcsa-ne-add-ki!"
