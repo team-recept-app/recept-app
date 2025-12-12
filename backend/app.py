@@ -1,3 +1,6 @@
+import secrets
+import time
+import users
 from flask import Flask, jsonify, request
 from flask import send_from_directory
 from flask_cors import CORS
@@ -6,6 +9,7 @@ from db import init_db, query_one, query_all, execute, get_average_rating, now_i
 from models import from_json_list, to_json_list
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import timedelta
+
 
 app = Flask(__name__)
 CORS(app)
@@ -314,7 +318,99 @@ def delete_favorite(recipe_id):
     except Exception as e:
         return jsonify({"msg": f"Hiba a kedvenc törlésekor: {e}"}), 500
 
+
+@app.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    
+    email = request.get_json().get("email")
+
+    user = query_one(
+        "SELECT id FROM users WHERE email = ?",
+        (email,)
+    )
+
+    # IMPORTANT: same response even if user does not exist
+    if not user:
+        return jsonify({"msg": "If the email exists, a reset link was sent"})
+
+    token = secrets.token_urlsafe(32)
+    expiry = int(time.time()) + 30 * 60  # 30 minutes
+
+    execute(
+        "UPDATE users SET reset_token = ?, reset_token_expires_at = ? WHERE id = ?",
+        (token, expiry, user["id"])
+    )
+
+    reset_link = f"http://localhost:5173/reset-password?token={token}"
+
+    send_email(
+        to=email,
+        subject="Password reset",
+        body=f"Click here to reset your password:\n{reset_link}"
+    )
+
+    return jsonify({"msg": "If the email exists, a reset link was sent"})
+
+
+@app.route("/reset-password", methods=["POST"])
+def reset_password():
+    token = request.get_json().get("token")
+    new_password = request.get_json().get("password")
+
+    user = query_one(
+        """
+        SELECT id FROM users
+        WHERE reset_token = ?
+          AND reset_token_expires_at > ?
+        """,
+        (token, int(time.time()))
+    )
+
+    if not user:
+        return jsonify({"msg": "Invalid or expired token"}), 400
+
+    hashed = generate_password_hash(new_password)
+
+    execute(
+        """
+        UPDATE users
+        SET password_hash = ?, reset_token = NULL, reset_token_expires_at = NULL
+        WHERE id = ?
+        """,
+        (hashed, user["id"])
+    )
+
+    return jsonify({"msg": "Password successfully reset"})
+
+
+
+
+#ywsm vzpv pxny jjgz
+
+
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = 587
+SMTP_USER = "cipo.istvan@gmail.com"
+SMTP_PASS = "ywsmvzpvpxnyjjgz"
+FROM_EMAIL = SMTP_USER
+
+
+import smtplib
+from email.message import EmailMessage
+
+def send_email(to: str, subject: str, body: str):
+    msg = EmailMessage()
+    msg["From"] = FROM_EMAIL
+    msg["To"] = to
+    msg["Subject"] = subject
+    msg.set_content(body)
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASS)
+        server.send_message(msg)
+
+
 if __name__ == "__main__":
     init_db()
     app.run(host="127.0.0.1", port=8000, debug=True)
-

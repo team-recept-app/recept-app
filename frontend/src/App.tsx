@@ -4,6 +4,7 @@ import Orb from "../components/Orb";
 import "../styles/app.css";
 import HomePage from "./HomePage";
 import RecipePage from "./RecipePage";
+import ProfilePage from "./ProfilePage";
 
 const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -27,8 +28,21 @@ export default function App() {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem("token")
+  );
+
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(() => {
+    const raw = localStorage.getItem("selectedRecipe");
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as Recipe;
+    } catch {
+      return null;
+    }
+  });
+
+  const [view, setView] = useState<"home" | "profile">("home");
 
   const switchToLogin = () => {
     setMode("login");
@@ -73,7 +87,9 @@ export default function App() {
         setPw2("");
         setName("");
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Sikertelen regisztráció");
+        setError(
+          err instanceof Error ? err.message : "Sikertelen regisztráció"
+        );
       }
       return;
     }
@@ -83,24 +99,30 @@ export default function App() {
       localStorage.setItem("token", t);
       setToken(t);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Sikertelen bejelentkezés");
+      setError(
+        err instanceof Error ? err.message : "Sikertelen bejelentkezés"
+      );
     }
   }
 
   function logout() {
     localStorage.removeItem("token");
+    localStorage.removeItem("selectedRecipe");
     setToken(null);
     setSelectedRecipe(null);
     clearFields();
     setMode("login");
+    setView("home");
   }
 
   function openRecipe(recipe: Recipe) {
     setSelectedRecipe(recipe);
+    localStorage.setItem("selectedRecipe", JSON.stringify(recipe));
   }
 
   function backToHome() {
     setSelectedRecipe(null);
+    localStorage.removeItem("selectedRecipe");
   }
 
   if (!token) {
@@ -119,7 +141,7 @@ export default function App() {
                   <input
                     className="input"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={e => setName(e.target.value)}
                     placeholder="Anna"
                   />
                 </>
@@ -129,7 +151,7 @@ export default function App() {
               <input
                 className="input"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="user1@example.com"
               />
 
@@ -137,7 +159,7 @@ export default function App() {
               <input
                 className="input"
                 value={pw}
-                onChange={(e) => setPw(e.target.value)}
+                onChange={e => setPw(e.target.value)}
                 type="password"
                 placeholder="password1"
               />
@@ -148,7 +170,7 @@ export default function App() {
                   <input
                     className="input"
                     value={pw2}
-                    onChange={(e) => setPw2(e.target.value)}
+                    onChange={e => setPw2(e.target.value)}
                     type="password"
                     placeholder="ismételd meg a jelszót"
                   />
@@ -179,7 +201,9 @@ export default function App() {
 
               {error && <div className="error">{error}</div>}
               {info && <div className="info">{info}</div>}
-              {mode === "login" && <div className="hint">user1@example.com / password1</div>}
+              {mode === "login" && (
+                <div className="hint">user1@example.com / password1</div>
+              )}
             </form>
           </div>
         </div>
@@ -190,9 +214,26 @@ export default function App() {
   return (
     <Shell>
       {selectedRecipe ? (
-        <RecipePage recipe={selectedRecipe} onBack={backToHome} onLogout={logout} />
+        <RecipePage
+   recipe={selectedRecipe}
+   onBack={backToHome}
+   onLogout={logout}
+   token={token as string}
+/>
+      ) : view === "home" ? (
+        <HomePage
+          onLogout={logout}
+          onOpenRecipe={openRecipe}
+          token={token as string}
+          onOpenProfile={() => setView("profile")}
+        />
       ) : (
-        <HomePage onLogout={logout} onOpenRecipe={openRecipe} />
+        <ProfilePage
+  onLogout={logout}
+  onBackHome={() => setView("home")}
+  token={token}              
+  onOpenRecipe={openRecipe}  
+/>
       )}
     </Shell>
   );

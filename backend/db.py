@@ -22,7 +22,9 @@ def init_db():
         email TEXT UNIQUE NOT NULL,
         name TEXT NOT NULL,
         password_hash TEXT NOT NULL,
-        created_at TEXT NOT NULL
+        created_at TEXT NOT NULL,
+        reset_token TEXT,
+        reset_token_expires_at INTEGER
     );
     """)
 
