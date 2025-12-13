@@ -8,6 +8,12 @@ import ProfilePage from "./ProfilePage";
 import AdminUsersPage from "./AdminUsersPage";
 import AdminAllergensPage from "./AdminAllergensPage";
 import AdminCategoriesPage from "./AdminCategoriesPage";
+import { useEffect } from "react";
+
+
+
+
+
 
 
 
@@ -27,7 +33,7 @@ const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
 
 export default function App() {
 
-  const resetToken = new URLSearchParams(window.location.search).get("access_token");
+  const resetToken = new URLSearchParams(window.location.search).get("reset_token");
   const [newPw, setNewPw] = useState("");
   const [newPw2, setNewPw2] = useState("");
   const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem("is_admin") === "1");
@@ -42,6 +48,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem("access_token"));
+  const [userName, setUserName] = useState<string | null>(  () => localStorage.getItem("user_name"));
+  const [userEmail, setUserEmail] = useState<string | null>(  () => localStorage.getItem("user_email"));
 
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(() => {
     const raw = localStorage.getItem("selectedRecipe");
@@ -73,6 +81,31 @@ export default function App() {
     setError(null);
     setInfo(null);
   }
+
+useEffect(() => {
+  if (token) {
+    const storedName = localStorage.getItem("user_name");
+    const storedEmail = localStorage.getItem("user_email");
+
+    if (storedName && !userName) {
+      setUserName(storedName);
+    }
+    if (storedEmail && !userEmail) {
+      setUserEmail(storedEmail);
+    }
+  }
+}, [token]);
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const reset = params.get("reset_token");
+
+  if (reset) {
+    setMode("reset");
+    setToken(null);          // force auth off
+  }
+}, []);
+
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -111,8 +144,12 @@ export default function App() {
       localStorage.setItem("access_token", t.access_token);
       localStorage.setItem("is_admin", String(t.is_admin));
       localStorage.setItem("user_id", String(t.user_id));
+      localStorage.setItem("user_name", t.name);
+      localStorage.setItem("user_email", email.trim());
       setToken(t.access_token);
       setIsAdmin(Boolean(Number(t.is_admin)));
+      setUserName(t.name);
+      setUserEmail(email.trim());
       console.log("LOGIN RESPONSE user_id:", t.user_id);
     } catch (err: unknown) {
       setError(
@@ -121,7 +158,7 @@ export default function App() {
     }
   }
 
-  function logout() {
+/*   function logout() {
     localStorage.removeItem("access_token");
     localStorage.removeItem("selectedRecipe");
     setToken(null);
@@ -129,7 +166,19 @@ export default function App() {
     clearFields();
     setMode("login");
     setView("home");
-  }
+  } */
+
+    function logout() {
+      localStorage.clear();   // 🔥 important
+      clearFields();
+      setToken(null);
+      setUserName(null);
+      setUserEmail(null);
+      setSelectedRecipe(null);
+      setMode("login");
+      setView("home");
+    }
+
 
   function openRecipe(recipe: Recipe) {
     setSelectedRecipe(recipe);
@@ -141,14 +190,16 @@ export default function App() {
     localStorage.removeItem("selectedRecipe");
   }
 
-  if (!token) {
+  if (!token || mode === "reset") {
     return (
       <Shell>
         <div className="center-screen">
           <div className="glass-card">
-            <h2 className="card-title">
-              {mode === "login" ? "Bejelentkezés" : "Regisztráció"}
-            </h2>
+              <h2 className="card-title">
+                {mode === "login" && "Bejelentkezés"}
+                {mode === "register" && "Regisztráció"}
+                {mode === "reset" && "Jelszó módosítása"}
+              </h2>
               {mode === "reset" ? (
                 <form
                   onSubmit={async e => {
@@ -166,7 +217,7 @@ export default function App() {
                     }
 
                     try {
-                      await fetch(`${API}/reset-password`, {
+                      const res = await fetch(`${API}/reset-password`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -175,9 +226,19 @@ export default function App() {
                         }),
                       });
 
+                      const data = await res.json().catch(() => ({}));
+
+                      if (!res.ok) {
+                        setError(data.msg || "A jelszó módosítása nem sikerült.");
+                        return;
+                      }
+
                       setInfo("Jelszó sikeresen módosítva. Most jelentkezz be.");
+                      setNewPw("");
+                      setNewPw2("");
                       setMode("login");
                       window.history.replaceState({}, "", "/");
+
                     } catch {
                       setError("A jelszó módosítása nem sikerült.");
                     }
@@ -349,10 +410,11 @@ return (
       />
     ) : (
       <ProfilePage
-        onLogout={logout}
-        onBackHome={() => setView("home")}
-        token={token}
-        onOpenRecipe={openRecipe}
+  onLogout={logout}
+  onBackHome={() => setView("home")}
+  token={token}
+  
+  onOpenRecipe={openRecipe}
       />
     )}
   </Shell>

@@ -3,12 +3,6 @@ import "../styles/recipePageStyles.css";
 import "../styles/homepageStyles.css";
 import { API, addFavorite, removeFavorite, type Recipe } from "./api";
 
-type RecipeAllergen = string | {
-  code?: string;
-  name?: string;
-  description?: string;
-};
-
 type Props = {
   recipe: Recipe;
   onBack: () => void;
@@ -16,60 +10,138 @@ type Props = {
   token: string;
 };
 
-export default function RecipePage({ recipe, onBack, onLogout, token }: Props) {
+export default function RecipePage({ recipe: recipe, onBack, onLogout, token }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState<boolean>(!!recipe.is_favorite);
   const [favLoading, setFavLoading] = useState(false);
   const [favError, setFavError] = useState<string | null>(null);
+  const [currentRecipe, setCurrentRecipe] = useState(recipe);
+  
+
+
+
+  /* ---------- EDIT MODE ---------- */
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [editTitle, setEditTitle] = useState(currentRecipe.title);
+  const [editSummary, setEditSummary] = useState(currentRecipe.summary ?? "");
+  const [editIngredients, setEditIngredients] = useState<string[]>([
+    ...currentRecipe.ingredients,
+  ]);
+  const [editSteps, setEditSteps] = useState<string[]>([...currentRecipe.steps]);
+  const [editAllergens, setEditAllergens] = useState(
+    currentRecipe.allergens.map(a => ({ ...a }))
+  );
+
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    const root = document.querySelector(".app-root");
-    if (root instanceof HTMLElement) {
-      root.scrollTop = 0;
-    } else {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    }
+    window.scrollTo(0, 0);
   }, []);
 
-  const allergenLabels = Array.isArray(recipe.allergens)
-    ? (recipe.allergens as RecipeAllergen[])
-        .map(a =>
-          typeof a === "string" ? a : a.name ?? a.code ?? ""
-        )
-        .filter(label => label && label.trim().length > 0)
-    : [];
+  /* ---------- FAVORITES ---------- */
 
   async function toggleFavorite() {
+    if (isEditing) return;
+
     setFavError(null);
     setFavLoading(true);
     try {
       if (isFavorite) {
-        await removeFavorite(recipe.id, token);
+        await removeFavorite(currentRecipe.id, token);
         setIsFavorite(false);
       } else {
-        await addFavorite(recipe.id, token);
+        await addFavorite(currentRecipe.id, token);
         setIsFavorite(true);
       }
-
-      const raw = localStorage.getItem("selectedRecipe");
-      if (raw) {
-        try {
-          const stored = JSON.parse(raw) as Recipe;
-          if (stored.id === recipe.id) {
-            stored.is_favorite = !isFavorite;
-            localStorage.setItem("selectedRecipe", JSON.stringify(stored));
-          }
-        } catch {
-          //...
-        }
-      }
-    } catch (err) {
-      console.error("Kedvenc módosítás hiba:", err);
+    } catch {
       setFavError("Nem sikerült módosítani a kedvencek között.");
     } finally {
       setFavLoading(false);
     }
   }
+
+  /* ---------- HELPERS ---------- */
+
+  function resetEdits() {
+    setEditTitle(currentRecipe.title);
+    setEditSummary(currentRecipe.summary ?? "");
+    setEditIngredients([...currentRecipe.ingredients]);
+    setEditSteps([...currentRecipe.steps]);
+    setEditAllergens(currentRecipe.allergens.map(a => ({ ...a })));
+  }
+
+  function removeIngredient(idx: number) {
+    setEditIngredients(editIngredients.filter((_, i) => i !== idx));
+  }
+
+  function removeStep(idx: number) {
+    setEditSteps(editSteps.filter((_, i) => i !== idx));
+  }
+
+  function removeAllergen(idx: number) {
+    setEditAllergens(editAllergens.filter((_, i) => i !== idx));
+  }
+
+  /* ---------- SAVE ---------- */
+
+async function saveRecipe() {
+  setSaveError(null);
+  setSaving(true);
+
+  try {
+    const origCodes = currentRecipe.allergens.map(a => a.code).filter(Boolean).sort();
+    const editCodes = editAllergens.map(a => a.code).filter(Boolean).sort();
+
+    const body: any = {
+      title: editTitle.trim(),
+      summary: editSummary.trim(),
+      ingredients: editIngredients.filter(i => i.trim()),
+      steps: editSteps.filter(s => s.trim()),
+      category: currentRecipe.category,
+      image_url: currentRecipe.image_url,
+    };
+
+    if (JSON.stringify(origCodes) !== JSON.stringify(editCodes)) {
+      body.allergens = editCodes;
+    }
+
+    const res = await fetch(`${API}/recipes/${currentRecipe.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+
+    // ✅ ONLY update local recipe AFTER successful save
+    setCurrentRecipe(prev => ({
+      ...prev,
+      title: body.title,
+      summary: body.summary,
+      ingredients: body.ingredients,
+      steps: body.steps,
+      allergens: editAllergens.filter(a => a.code),
+    }));
+
+    setIsEditing(false);
+  } catch {
+    setSaveError("Nem sikerült menteni a receptet.");
+  } finally {
+    setSaving(false);
+  }
+}
+
+
+
+
+  /* ================== RENDER ================== */
 
   return (
     <div className="recipe-page-root">
@@ -81,138 +153,271 @@ export default function RecipePage({ recipe, onBack, onLogout, token }: Props) {
         <div className="recipe-page-brand">Főtt&Lefedve</div>
 
         <div className="menu">
-          <button
-            className="burger"
-            onClick={() => setMenuOpen(v => !v)}
-            aria-label="Menu"
-          >
-            <span />
-            <span />
-            <span />
+          <button className="burger" onClick={() => setMenuOpen(v => !v)}>
+            <span /><span /><span />
           </button>
           {menuOpen && (
-            <div
-              className="dropdown"
-              onMouseLeave={() => setMenuOpen(false)}
-            >
-              <button
-                className="dd-item"
-                onClick={() => {
-                  setMenuOpen(false);
-                  onBack();
-                }}
-              >
-                Kezdőlap
-              </button>
-              <button
-                className="dd-item"
-                onClick={() => {
-                  setMenuOpen(false);
-                  alert("Profilom később");
-                }}
-              >
-                Profilom
-              </button>
-              <button
-                className="dd-item danger"
-                onClick={() => {
-                  setMenuOpen(false);
-                  onLogout();
-                }}
-              >
-                Kijelentkezés
-              </button>
+            <div className="dropdown" onMouseLeave={() => setMenuOpen(false)}>
+              <button className="dd-item" onClick={onBack}>Kezdőlap</button>
+              <button className="dd-item danger" onClick={onLogout}>Kijelentkezés</button>
             </div>
           )}
         </div>
       </header>
 
       <main className="recipe-page-main">
+        {/* ---------- HERO ---------- */}
         <section className="recipe-hero">
+          {/* LEFT */}
           <div className="recipe-hero-left">
-            {recipe.image_url ? (
+            {currentRecipe.image_url ? (
               <img
-                src={`${API}/api/images/${recipe.image_url}`}
-                alt={recipe.title}
+                src={`${API}/api/images/${currentRecipe.image_url}`}
+                alt={currentRecipe.title}
                 className="recipe-hero-img"
               />
             ) : (
-              <div className="recipe-hero-placeholder">
-                Nincs kép ehhez a recepthez
-              </div>
-            )}
-          </div>
-
-          <div className="recipe-hero-right">
-            <h1 className="recipe-title-large">{recipe.title}</h1>
-            {recipe.summary && (
-              <p className="recipe-summary-large">{recipe.summary}</p>
-            )}
-
-            <div className="recipe-meta-row">
-              {recipe.category && (
-                <span className="recipe-chip recipe-chip-category">
-                  {recipe.category}
-                </span>
-              )}
-              {recipe.average_rating != null && (
-                <span className="recipe-chip recipe-chip-rating">
-                  ⭐ {recipe.average_rating.toFixed(1)}
-                </span>
-              )}
-            </div>
-
-            {allergenLabels.length > 0 && (
-              <div className="recipe-allergen-row">
-                <div className="recipe-allergen-title">Allergének</div>
-                <div className="recipe-allergen-chips">
-                  {allergenLabels.map((label, idx) => (
-                    <span
-                      key={idx}
-                      className="recipe-chip recipe-chip-allergen"
-                    >
-                      {label}
-                    </span>
-                  ))}
-                </div>
-              </div>
+              <div className="recipe-hero-placeholder">Nincs kép</div>
             )}
 
             <button
               className={
-                "rp-fav-btn" +
+                "rp-fav-btn rp-fav-btn-under-image" +
                 (isFavorite ? " rp-fav-btn--active" : "") +
-                (favLoading ? " rp-fav-btn--loading" : "")
+                (favLoading ? " rp-fav-btn--loading" : "") +
+                (isEditing ? " rp-fav-btn--disabled" : "")
               }
               onClick={toggleFavorite}
-              disabled={favLoading}
+              disabled={favLoading || isEditing}
             >
-              {favLoading
-                ? "Mentés..."
-                : isFavorite
-                ? "Eltávolítás a kedvencek közül"
-                : "Hozzáadás a kedvencekhez"}
+              {isFavorite ? "★ Kedvenc" : "☆ Kedvencekhez"}
             </button>
+
             {favError && <div className="rp-fav-error">{favError}</div>}
+          </div>
+
+          {/* RIGHT */}
+          <div className="recipe-hero-right">
+            {/* TITLE */}
+            {isEditing ? (
+              <input
+                className="rp-edit-input rp-edit-title"
+                value={editTitle}
+                onChange={e => setEditTitle(e.target.value)}
+              />
+            ) : (
+              <h1 className="recipe-title-large">{currentRecipe.title}</h1>
+            )}
+
+            {/* SUMMARY */}
+            {isEditing ? (
+              <textarea
+                className="rp-edit-textarea rp-edit-summary"
+                value={editSummary}
+                onChange={e => setEditSummary(e.target.value)}
+              />
+            ) : (
+              currentRecipe.summary && (
+                <p className="recipe-summary-large">{currentRecipe.summary}</p>
+              )
+            )}
+
+            {/* META */}
+            <div className="recipe-meta-row">
+              {currentRecipe.category && (
+                <span className="recipe-chip recipe-chip-category">
+                  {currentRecipe.category}
+                </span>
+              )}
+              {currentRecipe.average_rating != null && (
+                <span className="recipe-chip recipe-chip-rating">
+                  ⭐ {currentRecipe.average_rating.toFixed(1)}
+                </span>
+              )}
+            </div>
+
+            {/* ALLERGENS */}
+            <div className="recipe-allergen-row">
+              <div className="recipe-allergen-title">Allergének</div>
+              <div className="recipe-allergen-chips">
+                {(isEditing ? editAllergens : currentRecipe.allergens).map((a, idx) => (
+                  <span
+                    key={idx}
+                    className="recipe-chip recipe-chip-allergen ingredient-item--editable"
+                  >
+                    {a.name ?? a.code}
+                    <button
+                      className={
+                        "ingredient-delete" +
+                        (!isEditing ? " ingredient-delete--disabled" : "")
+                      }
+                      disabled={!isEditing}
+                      onClick={() => isEditing && removeAllergen(idx)}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* ACTIONS */}
+            <div className="recipe-action-row">
+              <button
+                className={"rp-btn" + (isEditing ? " rp-btn-muted" : "")}
+                onClick={() => !isEditing && setIsEditing(true)}
+                disabled={isEditing}
+              >
+                ✏️ Szerkesztés
+              </button>
+
+<button
+  type="button"
+  className="rp-btn rp-btn-primary"
+  onClick={saveRecipe}
+  disabled={!isEditing || saving}
+>
+  💾 Mentés
+</button>
+
+
+              <button
+                className="rp-btn"
+                onClick={() => {
+                  resetEdits();
+                  setIsEditing(false);
+                }}
+                disabled={!isEditing || saving}
+              >
+                ✖ Mégse
+              </button>
+            </div>
+
+            {saveError && <div className="rp-fav-error">{saveError}</div>}
           </div>
         </section>
 
-        <section className="recipe-section-block">
-          <h2 className="recipe-section-title">Hozzávalók</h2>
-          <ul className="recipe-list">
-            {recipe.ingredients.map((ing, idx) => (
-              <li key={idx}>{ing}</li>
-            ))}
-          </ul>
-        </section>
+        {/* INGREDIENTS */}
+<section className="recipe-section-block">
+  <h2 className="recipedetails-section-title">Hozzávalók</h2>
 
+  <div className="ingredient-grid">
+    {(isEditing ? editIngredients : currentRecipe.ingredients).map((ing, idx) => (
+      <div key={idx} className="ingredient-item ingredient-item--editable">
+        <span className="ingredient-text">{ing}</span>
+        <button
+          className={
+            "ingredient-delete" +
+            (!isEditing ? " ingredient-delete--disabled" : "")
+          }
+          disabled={!isEditing}
+          onClick={() => isEditing && removeIngredient(idx)}
+        >
+          ✕
+        </button>
+      </div>
+    ))}
+
+    {/* ➕ NEW INGREDIENT — MUST BE INSIDE GRID */}
+    {isEditing && (
+      <div className="ingredient-item ingredient-item--new">
+<input
+  className="ingredient-input"
+  placeholder="+ új hozzávaló"
+  onKeyDown={e => {
+    const input = e.target as HTMLInputElement;
+    const v = input.value.trim();
+    if (e.key === "Enter" && v) {
+      setEditIngredients(prev => [...prev, v]);
+      input.value = "";
+    }
+  }}
+  onBlur={e => {
+    const v = e.target.value.trim();
+    if (v) {
+      setEditIngredients(prev => [...prev, v]);
+      e.target.value = "";
+    }
+  }}
+/>
+
+      </div>
+    )}
+  </div>
+</section>
+
+
+        {/* STEPS GRID */}
         <section className="recipe-section-block">
-          <h2 className="recipe-section-title">Elkészítés lépésről lépésre</h2>
-          <ol className="recipe-steps">
-            {recipe.steps.map((step, idx) => (
-              <li key={idx}>{step}</li>
+          <h2 className="recipedetails-section-title">Elkészítés</h2>
+
+          <div className="steps-grid">
+            {(isEditing ? editSteps : currentRecipe.steps).map((step, idx) => (
+              <div key={idx} className="step-item">
+                <div className="step-header">
+                  <div className="step-index">{idx + 1}.</div>
+                  <button
+                    className={
+                      "ingredient-delete" +
+                      (!isEditing ? " ingredient-delete--disabled" : "")
+                    }
+                    disabled={!isEditing}
+                    onClick={() => isEditing && removeStep(idx)}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {isEditing ? (
+                  <textarea
+                    className="rp-edit-textarea step-text"
+                    value={step}
+                    onChange={e => {
+                      const next = [...editSteps];
+                      next[idx] = e.target.value;
+                      setEditSteps(next);
+                    }}
+                  />
+                ) : (
+                  <div className="rp-edit-textarea rp-edit-textarea--view step-text">
+                    {step}
+                  </div>
+                )}
+              </div>
             ))}
-          </ol>
+
+            {/* ➕ NEW STEP (same idea as new ingredient) */}
+            {isEditing && (
+              <div className="step-item step-item--new">
+                <div className="step-header">
+                  <div className="step-index">+</div>
+                </div>
+
+                <textarea
+  className="rp-edit-textarea step-text step-text--new"
+  placeholder="+ új lépés"
+  onKeyDown={e => {
+    const input = e.target as HTMLTextAreaElement;
+    const v = input.value.trim();
+    if (e.key === "Enter" && !e.shiftKey && v) {
+      e.preventDefault();
+      setEditSteps(prev => [...prev, v]);
+      input.value = "";
+    }
+  }}
+  onBlur={e => {
+    const v = e.target.value.trim();
+    if (v) {
+      setEditSteps(prev => [...prev, v]);
+      e.target.value = "";
+    }
+  }}
+/>
+
+              </div>
+            )}
+          </div>
+
         </section>
       </main>
     </div>

@@ -25,8 +25,17 @@ export default function ProfilePage({
   const [favorites, setFavorites] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const displayName = (userName && userName.trim()) || "Guest";
-  const displayEmail = (userEmail && userEmail.trim()) || "Nincs email adat";
+const displayName =
+  localStorage.getItem("user_name") || "Guest";
+
+const displayEmail =
+  localStorage.getItem("user_email") || "Nincs email adat";
+
+console.log("PROFILE localStorage dump:", {
+  user_name: localStorage.getItem("user_name"),
+  user_email: localStorage.getItem("user_email"),
+  token: localStorage.getItem("access_token"),
+});
 
   useEffect(() => {
     loadFavorites();

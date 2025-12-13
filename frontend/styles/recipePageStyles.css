@@ -1,3 +1,6 @@
+/* =========================================================
+   ROOT & HEADER (unchanged)
+   ========================================================= */
 
 .recipe-page-root {
   min-height: 100vh;
@@ -6,7 +9,6 @@
   display: flex;
   flex-direction: column;
 }
-
 
 .recipe-page-header {
   position: sticky;
@@ -27,6 +29,9 @@
   letter-spacing: 0.07em;
 }
 
+/* =========================================================
+   BUTTONS
+   ========================================================= */
 
 .rp-btn {
   border: none;
@@ -46,12 +51,14 @@
   transform: translateY(-1px);
 }
 
-.rp-btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
+.rp-btn-muted {
+  opacity: 0.45;
+  cursor: default;
 }
 
+/* =========================================================
+   MAIN LAYOUT
+   ========================================================= */
 
 .recipe-page-main {
   max-width: 1920px;
@@ -68,6 +75,10 @@
   margin-bottom: 2.5rem;
 }
 
+/* =========================================================
+   HERO LEFT (IMAGE + FAVORITE)
+   ========================================================= */
+
 .recipe-hero-left {
   border-radius: 0.75rem;
   overflow: hidden;
@@ -75,8 +86,9 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   min-height: 220px;
   display: flex;
+  flex-direction: column;
   align-items: stretch;
-  justify-content: center;
+  aspect-ratio: 16 / 9; 
 }
 
 .recipe-hero-img {
@@ -94,6 +106,32 @@
   justify-content: center;
 }
 
+/* Favorite button under image */
+.rp-fav-btn {
+  margin: 0.6rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: #f7f7f7;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.rp-fav-btn--active {
+  background: rgba(255, 210, 120, 0.16);
+  border-color: rgba(255, 210, 120, 0.9);
+}
+
+.rp-fav-btn--disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* =========================================================
+   HERO RIGHT
+   ========================================================= */
 
 .recipe-hero-right {
   display: flex;
@@ -112,6 +150,35 @@
   opacity: 0.9;
 }
 
+/* =========================================================
+   EDIT INPUTS (INLINE, SAME TYPOGRAPHY)
+   ========================================================= */
+
+.rp-edit-input,
+.rp-edit-textarea {
+  width: 100%;
+  background: transparent;
+  color: inherit;
+  border: none;
+  padding: 0;
+  resize: none;
+}
+
+.rp-edit-title {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.rp-edit-summary {
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+/* =========================================================
+   META & CHIPS
+   ========================================================= */
+
 .recipe-meta-row {
   display: flex;
   flex-wrap: wrap;
@@ -121,6 +188,7 @@
 .recipe-chip {
   display: inline-flex;
   align-items: center;
+  gap: 0.35rem;
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
   font-size: 0.8rem;
@@ -129,97 +197,86 @@
   background: rgba(10, 10, 10, 0.9);
 }
 
-.recipe-chip-category {
-  border-color: rgba(255, 215, 128, 0.6);
+/* =========================================================
+   DELETE BUTTON (STABLE, ALWAYS VISIBLE)
+   ========================================================= */
+
+.ingredient-delete {
+  width: 1.1rem;
+  text-align: center;
+  border: none;
+  background: transparent;
+  color: rgba(255, 120, 120, 0.9);
+  font-size: 0.9rem;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
-.recipe-chip-rating {
-  border-color: rgba(255, 222, 173, 0.8);
+.ingredient-delete--disabled {
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
 }
 
+/* =========================================================
+   INGREDIENT GRID
+   ========================================================= */
 
-.recipe-allergen-row {
-  margin-top: 0.75rem;
-}
-
-.recipe-allergen-title {
-  font-size: 0.85rem;
-  opacity: 0.8;
-  margin-bottom: 0.35rem;
-}
-
-.recipe-allergen-chips {
+.ingredient-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.6rem 0.8rem;
 }
 
-.recipe-chip-allergen {
-  border-color: rgba(255, 160, 160, 0.7);
-}
-
-
-.rp-fav-btn {
-  margin-top: 1rem;
-  align-self: flex-start;
-  padding: 0.4rem 0.9rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: transparent;
-  color: #f7f7f7;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
+.ingredient-item {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  transition: background 0.12s ease-out, transform 0.12s ease-out,
-    border-color 0.12s ease-out;
+  gap: 0.45rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-.rp-fav-btn:hover {
+/* =========================================================
+   STEPS GRID (NEW)
+   ========================================================= */
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-.rp-fav-btn--active {
-  background: rgba(255, 210, 120, 0.16);
-  border-color: rgba(255, 210, 120, 0.9);
+.step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.rp-fav-btn--loading {
+.step-index {
+  font-size: 0.75rem;
   opacity: 0.6;
-  cursor: default;
 }
 
-.rp-fav-error {
-  margin-top: 0.4rem;
-  font-size: 0.8rem;
-  color: #ff8b8b;
+.step-text {
+  min-height: 4.5rem;
 }
 
-
-.recipe-section-block {
-  margin-bottom: 2rem;
-}
-
-.recipe-section-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-}
-
-.recipe-list,
-.recipe-steps {
-  padding-left: 1.2rem;
-}
-
-.recipe-list li,
-.recipe-steps li {
-  margin-bottom: 0.3rem;
-}
-
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
 
 @media (max-width: 800px) {
   .recipe-hero {
@@ -231,8 +288,51 @@
   }
 }
 
-@media (max-width: 600px) {
-  .recipe-page-main {
-    padding: 1.25rem 0.75rem 2.25rem;
-  }
+
+/* === NEW INGREDIENT CHIP === */
+
+/* === NEW INGREDIENT CHIP: HIGHLIGHT === */
+
+.ingredient-item--new {
+  background: rgba(255, 215, 120, 0.28);   /* soft yellow */
+  border: 1px dashed rgba(255, 215, 120, 0.9);
+  margin-top: 0.4rem;                     /* keeps vertical separation */
+}
+
+/* Input text stays normal */
+.ingredient-item--new .ingredient-input {
+  color: inherit;
+}
+
+/* Placeholder slightly darker for readability */
+.ingredient-item--new .ingredient-input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Input styled like normal text */
+.ingredient-input {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-family: inherit;
+  outline: none;
+  min-width: 8ch;
+}
+
+/* Placeholder subtle */
+.ingredient-input::placeholder {
+  opacity: 0.6;
+}
+
+
+/* === NEW STEP CARD === */
+
+.step-item--new {
+  background: rgba(255, 215, 120, 0.28);
+  border: 1px dashed rgba(255, 215, 120, 0.9);
+}
+
+.step-text--new::placeholder {
+  color: rgba(255, 255, 255, 0.9);
 }

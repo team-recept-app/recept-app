@@ -82,15 +82,15 @@ def forgot_password():
     if not user:
         return jsonify({"msg": "If the email exists, a reset link was sent"})
 
-    token = secrets.token_urlsafe(32)
+    reset_token = secrets.token_urlsafe(32)
     expiry = int(time.time()) + 30 * 60  # 30 minutes
 
     execute(
         "UPDATE users SET reset_token = ?, reset_token_expires_at = ? WHERE id = ?",
-        (token, expiry, user["id"])
+        (reset_token, expiry, user["id"])
     )
 
-    reset_link = f"http://localhost:5173/reset-password?token={token}"
+    reset_link = f"http://localhost:5173/reset-password?reset_token={reset_token}"
 
     send_email(
         to=email,
