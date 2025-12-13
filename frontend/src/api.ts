@@ -38,6 +38,17 @@ type FetchRecipesOpts = {
   favorites?: boolean;
 };
 
+export type Category = {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+};
+
+
+
+
+
 export async function fetchAllergens(): Promise<Allergen[]> {
   const r = await fetch(`${API}/allergens`);
   if (!r.ok) return [];

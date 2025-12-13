@@ -12,7 +12,8 @@ export default function HomePage({
   onOpenProfile,
   isAdmin,
   onOpenAdminUsers,
-  onOpenAdminAllergens
+  onOpenAdminAllergens,
+  onOpenAdminCategories
 }: {
   onLogout: () => void;
   onOpenRecipe: (recipe: Recipe) => void;
@@ -21,6 +22,7 @@ export default function HomePage({
   isAdmin: boolean;
   onOpenAdminUsers: () => void;
   onOpenAdminAllergens: () => void;
+  onOpenAdminCategories: () => void;
 }) {
 
 
@@ -161,7 +163,12 @@ export default function HomePage({
     </button>
 
 
-    <button className="dd-item dd-sub" disabled>
+    <button 
+      className="dd-item dd-sub"
+      onClick={() => {
+        setMenuOpen(false);
+        onOpenAdminCategories();
+      }}>
       Kategóriák
     </button>
   </div>
