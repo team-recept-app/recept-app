@@ -169,32 +169,38 @@ async function saveRecipe() {
         {/* ---------- HERO ---------- */}
         <section className="recipe-hero">
           {/* LEFT */}
-          <div className="recipe-hero-left">
-            {currentRecipe.image_url ? (
-              <img
-                src={`${API}/api/images/${currentRecipe.image_url}`}
-                alt={currentRecipe.title}
-                className="recipe-hero-img"
-              />
-            ) : (
-              <div className="recipe-hero-placeholder">Nincs kép</div>
-            )}
+<div className="recipe-hero-left">
 
-            <button
-              className={
-                "rp-fav-btn rp-fav-btn-under-image" +
-                (isFavorite ? " rp-fav-btn--active" : "") +
-                (favLoading ? " rp-fav-btn--loading" : "") +
-                (isEditing ? " rp-fav-btn--disabled" : "")
-              }
-              onClick={toggleFavorite}
-              disabled={favLoading || isEditing}
-            >
-              {isFavorite ? "★ Kedvenc" : "☆ Kedvencekhez"}
-            </button>
+  {/* IMAGE BOX (16:9, clipped) */}
+  <div className="recipe-image-box">
+    {currentRecipe.image_url ? (
+      <img
+        src={`${API}/api/images/${currentRecipe.image_url}`}
+        alt={currentRecipe.title}
+        className="recipe-hero-img"
+      />
+    ) : (
+      <div className="recipe-hero-placeholder">Nincs kép</div>
+    )}
+  </div>
 
-            {favError && <div className="rp-fav-error">{favError}</div>}
-          </div>
+  {/* FAVORITE BUTTON (NOT clipped) */}
+  <button
+    className={
+      "rp-fav-btn rp-fav-btn-under-image" +
+      (isFavorite ? " rp-fav-btn--active" : "") +
+      (favLoading ? " rp-fav-btn--loading" : "") +
+      (isEditing ? " rp-fav-btn--disabled" : "")
+    }
+    onClick={toggleFavorite}
+    disabled={favLoading || isEditing}
+  >
+    {isFavorite ? "★ Kedvenc" : "☆ Kedvencekhez"}
+  </button>
+
+  {favError && <div className="rp-fav-error">{favError}</div>}
+</div>
+
 
           {/* RIGHT */}
           <div className="recipe-hero-right">

@@ -79,6 +79,14 @@
    HERO LEFT (IMAGE + FAVORITE)
    ========================================================= */
 
+.recipe-image-box {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  width: 100%;
+}
+
+
+
 .recipe-hero-left {
   border-radius: 0.75rem;
   overflow: hidden;
