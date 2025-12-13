@@ -140,3 +140,19 @@ def get_average_rating(recipe_id: int) -> float | None:
     if row and row['avg_rating'] is not None:
         return round(row['avg_rating'], 2)
     return None
+
+def execute_returning_id(sql: str, params: tuple = ()) -> int:
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute(sql, params)
+    conn.commit()
+
+    last_id = cur.lastrowid
+    conn.close()
+
+    if last_id is None:
+        raise RuntimeError("INSERT did not return a row id")
+
+    return last_id
+

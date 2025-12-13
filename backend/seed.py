@@ -143,6 +143,33 @@ RECIPES = [
         "image_url": "paprikaskrumpli.jpg",
         "author_email": "user1@example.com",
     },
+    {
+    "title": "Sajtos-tejfölös csirkemell",
+    "summary": "Gyors és egyszerű magyaros csirkés recept sütőben elkészítve.",
+    "ingredients": [
+        "500 g csirkemell filé",
+        "200 g reszelt sajt",
+        "200 g tejföl",
+        "2 gerezd fokhagyma",
+        "só",
+        "bors",
+        "1 evőkanál olaj"
+    ],
+    "steps": [
+        "A csirkemellet megmossuk és felszeleteljük.",
+        "Sózzuk, borsozzuk, majd egy olajozott tepsibe tesszük.",
+        "A tejfölt összekeverjük a zúzott fokhagymával.",
+        "A csirkére kenjük a tejfölös keveréket.",
+        "Megszórjuk reszelt sajttal.",
+        "180 °C-ra előmelegített sütőben 30–35 percig sütjük."
+    ],
+    "category": "Főétel",
+    "allergens": ["MI", "LA"],
+    "image_url": "sajtos_csirkemell.jpg"
+    }
+
+
+
 ]
 
 ALLERGENS = [

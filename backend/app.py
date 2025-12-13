@@ -5,7 +5,7 @@ from flask import Flask, jsonify, request
 from flask import send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity
-from db import init_db, query_one, query_all, execute, get_average_rating, now_iso
+from db import init_db, query_one, query_all, execute, execute_returning_id, get_average_rating, now_iso
 from models import from_json_list, to_json_list
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import timedelta
@@ -188,33 +188,145 @@ def list_recipes():
 @app.route("/recipes", methods=["POST"])
 @jwt_required()
 def create_recipe():
-    current_user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     data = request.get_json()
 
     if not data.get("title") or not data.get("ingredients") or not data.get("steps"):
-        return jsonify({"msg": "Hiányzó kötelező mezők (title, ingredients, steps)."}), 400
+        return jsonify({"msg": "Hiányzó kötelező mezők"}), 400
 
     try:
-        execute(
-            """INSERT INTO recipes
-               (title, summary, ingredients, steps, category, allergens, image_url, author_id, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        recipe_id = execute_returning_id(
+            """
+            INSERT INTO recipes
+            (title, summary, ingredients, steps, category, image_url, author_id, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
             (
                 data.get("title"),
                 data.get("summary"),
-                to_json_list(data.get("ingredients", [])),
-                to_json_list(data.get("steps", [])),
+                to_json_list(data.get("ingredients")),
+                to_json_list(data.get("steps")),
                 data.get("category"),
-                to_json_list(data.get("allergens", [])),
                 data.get("image_url"),
-                current_user_id,
+                user_id,
                 now_iso(),
             ),
         )
-        return jsonify({"msg": "Recept sikeresen megosztva."}), 201
+
+        allergen_codes = data.get("allergens", [])
+        if allergen_codes:
+            rows = query_all(
+                f"""
+                SELECT id FROM allergens
+                WHERE code IN ({",".join("?" for _ in allergen_codes)})
+                """,
+                tuple(allergen_codes),
+            )
+
+            for r in rows:
+                execute(
+                    "INSERT INTO recipe_allergens (recipe_id, allergen_id) VALUES (?, ?)",
+                    (recipe_id, r["id"]),
+                )
+
+        return jsonify({"msg": "Recept létrehozva", "id": recipe_id}), 201
 
     except Exception as e:
-        return jsonify({"msg": f"Hiba a recept létrehozása közben: {str(e)}"}), 500
+        return jsonify({"msg": f"Hiba: {e}"}), 500
+
+
+
+@app.route("/recipes/<int:recipe_id>", methods=["PUT"])
+@jwt_required()
+def update_recipe(recipe_id):
+    user_id = int(get_jwt_identity())
+    data = request.get_json()
+
+    recipe = query_one(
+        "SELECT author_id FROM recipes WHERE id = ?",
+        (recipe_id,),
+    )
+
+    if not recipe:
+        return jsonify({"msg": "Recept nem található"}), 404
+
+    if recipe["author_id"] != user_id:
+        return jsonify({"msg": "Nincs jogosultság"}), 403
+
+    try:
+        execute(
+            """
+            UPDATE recipes SET
+                title = ?,
+                summary = ?,
+                ingredients = ?,
+                steps = ?,
+                category = ?,
+                image_url = ?
+            WHERE id = ?
+            """,
+            (
+                data.get("title"),
+                data.get("summary"),
+                to_json_list(data.get("ingredients")),
+                to_json_list(data.get("steps")),
+                data.get("category"),
+                data.get("image_url"),
+                recipe_id,
+            ),
+        )
+
+        execute(
+            "DELETE FROM recipe_allergens WHERE recipe_id = ?",
+            (recipe_id,),
+        )
+
+        allergen_codes = data.get("allergens", [])
+        if allergen_codes:
+            rows = query_all(
+                f"""
+                SELECT id FROM allergens
+                WHERE code IN ({",".join("?" for _ in allergen_codes)})
+                """,
+                tuple(allergen_codes),
+            )
+
+            for r in rows:
+                execute(
+                    "INSERT INTO recipe_allergens (recipe_id, allergen_id) VALUES (?, ?)",
+                    (recipe_id, r["id"]),
+                )
+
+        return jsonify({"msg": "Recept frissítve"}), 200
+
+    except Exception as e:
+        return jsonify({"msg": f"Hiba: {e}"}), 500
+
+
+
+@app.route("/recipes/<int:recipe_id>", methods=["DELETE"])
+@jwt_required()
+def delete_recipe(recipe_id):
+    user_id = int(get_jwt_identity())
+
+    recipe = query_one(
+        "SELECT author_id FROM recipes WHERE id = ?",
+        (recipe_id,),
+    )
+
+    if not recipe:
+        return jsonify({"msg": "Recept nem található"}), 404
+
+    if recipe["author_id"] != user_id:
+        return jsonify({"msg": "Nincs jogosultság a recept törléséhez"}), 403
+
+    try:
+        execute("DELETE FROM recipes WHERE id = ?", (recipe_id,))
+        return jsonify({"msg": "Recept törölve"}), 200
+
+    except Exception as e:
+        return jsonify({"msg": f"Hiba törlés közben: {e}"}), 500
+
 
 
 @app.route("/recipes/<int:recipe_id>/rate", methods=["POST"])
